@@ -8,6 +8,7 @@ import FungibleToken from "./utility/FungibleToken.cdc"
 import NonFungibleToken from "./utility/NonFungibleToken.cdc"
 import MetadataViews from "./utility/MetadataViews.cdc"
 import ViewResolver from "./utility/ViewResolver.cdc"
+import FAHCards from "./FAHCards.cdc"
 import FAHRoyalties from "./FAHRoyalties.cdc"
 import Profile from "./find/Profile.cdc"
 
@@ -31,8 +32,8 @@ pub contract FAHCardSets: NonFungibleToken, ViewResolver {
 
     // Maps the owner of a CardSet to the hash of CardSetMetadatas name then
     // to each individual CardSetMetadatas struct.
-    access(contract) let cardSetOwners: {Address: [String]}
-	access(contract) let cardSets: {String: Address}
+    access(account) let cardSetOwners: {Address: [String]}
+	access(account) let cardSets: {String: Address}
 
     // Metadata struct for defining CardSets
     pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
@@ -40,15 +41,45 @@ pub contract FAHCardSets: NonFungibleToken, ViewResolver {
         pub let metadataId: String
 		pub let name: String
         pub let description: String
-		pub let image: MetadataViews.IPFSFile
-		pub let thumbnail: MetadataViews.IPFSFile
-        pub let maxSupply: UInt64
-        pub let inCirculation: UInt64
-		pub let questionCards: [String]
+        pub let questionCards: [String]
         pub let responseCards: [String]
+        
+		pub var image: MetadataViews.IPFSFile
+		pub var thumbnail: MetadataViews.IPFSFile
+        pub var maxSupply: UInt64
+        pub var inCirculation: UInt64
 
         // Holder for extra/future metadata
         pub var extra: {String: AnyStruct}
+
+        pub fun createCardMetadata(_text: String, _type: FAHCards.CardType, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile, _maxSupply: UInt64) {
+            let hashArray = HashAlgorithm.SHA3_256.hash(_text.utf8.concat(_type.rawValue.toString().utf8))
+            let cardMetadataId = ""
+            for hash in hashArray {
+                cardMetadataId.concat(hash.toString())
+            }
+
+            // Check if a card set with this same name already exists
+            if FAHCards.cardMetadatas[cardMetadataId] != nil {
+                panic("A Card with this text and type already exists.")
+            }
+
+            FAHCards.cardMetadatas[cardMetadataId] = FAHCards.CardMetadata(_cardSetId: self.metadataId, _cardSetAuthor: self.owner!.address, _text: _text, _type: _type, _image: _image, _thumbnail: _thumbnail, _maxSupply: _maxSupply, _extra: {})
+
+            if _type == FAHCards.CardType.ANSWER {
+                self.responseCards.append(cardMetadataId)
+            } else {
+                self.questionCards.append(cardMetadataId)
+            }
+
+            self.maxSupply = self.maxSupply + _maxSupply
+        }
+
+        // mintCard mints a new FAHCard NFT and depsits
+        // it in the recipients collection
+        pub fun mintCard(metadataId: String, recipient: Address) {
+            
+        }
 
 		init(_metadataId: String, _name: String, _description: String, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile, _extra: {String: AnyStruct}) {
             self.id = self.uuid
@@ -100,20 +131,17 @@ pub contract FAHCardSets: NonFungibleToken, ViewResolver {
 						})
 					)
                 case Type<MetadataViews.Royalties>():
-                    var authorName: String = self.owner!.address.toString()
-                    if let profile = getAccount(self.owner!.address).getCapability(Profile.publicPath)
-								.borrow<&Profile.User{Profile.Public}>() {
-                                    let findName = profile.getFindName()
-                                    authorName = profile.getName().concat(" (").concat(findName == "" ? self.owner!.address.toString() : findName).concat(")")
-                                }
+                    let author = self.owner!.address
+                    let profile = Profile.find(author)
+                    let findName = profile.getFindName()
+                    let authorName = profile.getName().concat(" (").concat(findName == "" ? author.toString() : findName).concat(")")
+                    let authorVault = getAccount(author).getCapability<&{FungibleToken.Receiver}>(Profile.publicReceiverPath)
 
-                    let royalties: [MetadataViews.Royalty] = [
-                        MetadataViews.Royalty(
-							receiver: getAccount(self.owner!.address).getCapability<&FungibleToken.Vault{FungibleToken.Receiver}>(/public/flowTokenReceiver),
-							cut: FAHRoyalties.authorCardSet,
-							description: authorName.concat(" receives a ").concat((FAHRoyalties.authorCardSet * 100.0).toString()).concat("% royalty from secondary sales for authroing this FAH Card Set")
-						)
-                    ]
+                    let royalties = [MetadataViews.Royalty(
+                        receiver: authorVault,
+                        cut: FAHRoyalties.authorCardSet,
+                        description: authorName.concat(" receives a ").concat((FAHRoyalties.authorCardSet * 100.0).toString()).concat("% royalty from secondary sales for authoring this FAH Card Set")
+                    )]
                     
                     for royalty in FAHRoyalties.globalCardSet {
                         royalties.append(royalty)

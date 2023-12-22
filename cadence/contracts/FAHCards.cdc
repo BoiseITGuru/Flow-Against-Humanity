@@ -3,10 +3,12 @@
 *  
 *
 */
-
+import FungibleToken from "./utility/FungibleToken.cdc"
 import NonFungibleToken from "./utility/NonFungibleToken.cdc"
 import MetadataViews from "./utility/MetadataViews.cdc"
 import ViewResolver from "./utility/ViewResolver.cdc"
+import FAHRoyalties from "./FAHRoyalties.cdc"
+import Profile from "./find/Profile.cdc"
 
 pub contract FAHCards: NonFungibleToken, ViewResolver {
 	// Total supply of FAHCards in existence
@@ -26,9 +28,7 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
     pub let CollectionPublicPath: PublicPath
     pub let MinterStoragePath: StoragePath
 
-    // Maps the hash of CardMetadata text & type to each
-    // individual CardMetadata struct.
-	access(contract) let cardMetadatas: {String: CardMetadata}
+	access(account) let cardMetadatas: {String: CardMetadata}
 
     // Map of the oringal owners/minters of a FAHCard
     access(contract) let orginalOwner: {Address: {UInt64: [UInt64]}}
@@ -41,25 +41,93 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
         pub case ANSWER
     }
 
+    // Public CardMetaData Interface
+    pub struct interface CardMetadataPublic {
+        pub fun getCardSetId(): String
+        pub fun getCardSetAuthor(): Address
+        pub fun getText(): String
+        pub fun getCardType(): CardType
+        pub fun getImage(): MetadataViews.IPFSFile
+        pub fun getThumbnail(): MetadataViews.IPFSFile
+        pub fun getMaxSupply(): UInt64
+        pub fun getOwners(): {UInt64: Address}
+        pub fun getExtraMetadata(): {String: AnyStruct}
+        pub fun getInCirculation(): UInt64
+    }
+
+    // Admin CardMetaData Interface
+    pub struct interface CardMetadataAdmin {
+        pub fun incrementInCirculation()
+        pub fun purchased(serial: UInt64, buyer: Address)
+    }
+
     // Metadata struct for defining FAHCards
-    pub struct CardMetadata {
-		pub let text: String
-        pub let type: CardType
-		pub let image: MetadataViews.IPFSFile
-		pub let thumbnail: MetadataViews.IPFSFile
-		pub let maxSupply: UInt64
-        pub let inCirculation: UInt64
-		pub let owners: {UInt64: Address}
+    pub struct CardMetadata: CardMetadataPublic, CardMetadataAdmin {
+        access(self) let cardSetId: String
+        access(self) let cardSetAuthor: Address
+		access(self) let text: String
+        access(self) let type: CardType
+		access(self) let image: MetadataViews.IPFSFile
+		access(self) let thumbnail: MetadataViews.IPFSFile
+		access(self) let maxSupply: UInt64
+		access(self) let owners: {UInt64: Address}
+        access(self) let extra: {String: AnyStruct}
+        access(self) var inCirculation: UInt64
 
-        // Holder for extra/future metadata
-        pub var extra: {String: AnyStruct}
+        // GETTERS
+        pub fun getCardSetId(): String {
+            return self.cardSetId
+        }
 
-		access(account) fun purchased(serial: UInt64, buyer: Address) {
+        pub fun getCardSetAuthor(): Address {
+            return self.cardSetAuthor
+        }
+
+        pub fun getText(): String {
+            return self.text
+        }
+
+        pub fun getCardType(): CardType {
+            return self.type
+        }
+
+        pub fun getImage(): MetadataViews.IPFSFile {
+            return self.image
+        }
+
+        pub fun getThumbnail(): MetadataViews.IPFSFile {
+            return self.thumbnail
+        }
+
+        pub fun getMaxSupply(): UInt64 {
+            return self.maxSupply
+        }
+
+        pub fun getOwners(): {UInt64: Address} {
+            return self.owners
+        }
+
+        pub fun getExtraMetadata(): {String: AnyStruct} {
+            return self.extra
+        }
+
+        pub fun getInCirculation(): UInt64 {
+            return self.inCirculation
+        }
+
+        // SETTERS
+        pub fun incrementInCirculation() {
+            self.inCirculation = self.inCirculation + 1
+        }
+
+		pub fun purchased(serial: UInt64, buyer: Address) {
 			self.owners[serial] = buyer
 		}
 
-		init(_text: String, _type: CardType, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile, _maxSupply: UInt64, _extra: {String: AnyStruct}) {
-			self.text = _text
+		init(_cardSetId: String, _cardSetAuthor: Address, _text: String, _type: CardType, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile, _maxSupply: UInt64, _extra: {String: AnyStruct}) {
+			self.cardSetId = _cardSetId
+            self.cardSetAuthor = _cardSetAuthor
+            self.text = _text
 			self.type = _type
 			self.image = _image
 			self.thumbnail = _thumbnail
@@ -69,7 +137,7 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
             self.inCirculation = 0
 			self.owners = {}
 		}
-	}
+    }
 
     // The core resource that represents a Non Fungible Token.
     // New instances will be created using the NFTMinter resource
@@ -82,48 +150,19 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
         // FAHCard fields
         pub let text: String
         pub let type: CardType
+        pub let metadataId: String
 
-        // Metadata fields
-        pub let name: String
-        pub let description: String
-        pub let thumbnail: String
-        access(self) let royalties: [MetadataViews.Royalty]
-        access(self) let metadata: {String: AnyStruct}
+        pub fun getMetadata(): &CardMetadata{CardMetadataPublic}? {
+			return FAHCards.getCardMetadata(self.metadataId)
+		}
 
-        init(
-            id: UInt64,
-            text: String,
-            type: CardType,
-            thumbnail: String,
-            royalties: [MetadataViews.Royalty],
-            metadata: {String: AnyStruct},
-        ) {
-            self.id = id
-            self.text = text
-            self.type = type
-            self.thumbnail = thumbnail
-            self.royalties = royalties
-            self.metadata = metadata
+        init(_ cardMetadataId: String) {
+            let metadata = FAHCards.getCardMetadata(cardMetadataId) ?? panic("NFT metadata not found")
 
-            var _name: String = ""
-            var _description: String = ""
-            switch type {
-                case CardType.QUESTION:
-                    _name = "FAH Question Card"
-                    _description = "A standard question card for the card game Flow Against Humanity"
-                case CardType.QUESTION2:
-                    _name = "FAH Pick 2 Question Card"
-                    _description = "A pick 2 question card for the card game Flow Against Humanity"
-                case CardType.QUESTION3:
-                    _name = "FAH Pick 3 Question Card"
-                   _description = "A pick 3 question card for the card game Flow Against Humanity"
-                case CardType.ANSWER:
-                    _name = "FAH Response Card"
-                    _description = "A standard response card for the card game Flow Against Humanity"
-            }
-
-            self.name = _name
-            self.description = _description
+            self.id = metadata.getInCirculation()
+            self.text = metadata.getText()
+            self.type = metadata.getCardType()
+            self.metadataId = cardMetadataId
         }
 
         // Function that returns all the Metadata Views implemented by a Non Fungible Token
@@ -150,14 +189,29 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
         // @return A structure representing the requested view.
         //
         pub fun resolveView(_ view: Type): AnyStruct? {
+            let metadata = self.getMetadata() ?? panic("NFT metadata not found")
+            var name: String = ""
+            var description: String = ""
+            switch self.type {
+                case CardType.QUESTION:
+                    name = "FAH Question Card"
+                    description = "A standard question card for the card game Flow Against Humanity"
+                case CardType.QUESTION2:
+                    name = "FAH Pick 2 Question Card"
+                    description = "A pick 2 question card for the card game Flow Against Humanity"
+                case CardType.QUESTION3:
+                    name = "FAH Pick 3 Question Card"
+                    description = "A pick 3 question card for the card game Flow Against Humanity"
+                case CardType.ANSWER:
+                    name = "FAH Response Card"
+                    description = "A standard response card for the card game Flow Against Humanity"
+            }
             switch view {
                 case Type<MetadataViews.Display>():
                     return MetadataViews.Display(
-                        name: self.name,
-                        description: self.description,
-                        thumbnail: MetadataViews.HTTPFile(
-                            url: self.thumbnail
-                        )
+                        name: name,
+                        description: description,
+                        thumbnail: metadata.getThumbnail()
                     )
                 case Type<MetadataViews.Editions>():
                     // There is no max number of NFTs that can be minted from this contract
@@ -172,9 +226,25 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
                         self.id
                     )
                 case Type<MetadataViews.Royalties>():
-                    return MetadataViews.Royalties(
-                        self.royalties
-                    )
+                    let author = metadata.getCardSetAuthor()
+                    let profile = Profile.find(author)
+                    let findName = profile.getFindName()
+                    let authorName = profile.getName().concat(" (").concat(findName == "" ? author.toString() : findName).concat(")")
+                    let authorVault = getAccount(author).getCapability<&{FungibleToken.Receiver}>(Profile.publicReceiverPath)
+
+                    let royalties: [MetadataViews.Royalty] = []
+
+                    royalties.append(MetadataViews.Royalty(
+                        receiver: authorVault,
+                        cut: FAHRoyalties.authorCardSet,
+                        description: authorName.concat(" receives a ").concat((FAHRoyalties.authorCardSet * 100.0).toString()).concat("% royalty from secondary sales for authoring this FAH Card Set")
+                    ))
+
+                    for royalty in FAHRoyalties.globalCard {
+                        royalties.append(royalty)
+                    }
+
+                    return MetadataViews.Royalties(royalties)
                 case Type<MetadataViews.ExternalURL>():
                     return MetadataViews.ExternalURL("https://example-nft.onflow.org/".concat(self.id.toString()))
                 case Type<MetadataViews.NFTCollectionData>():
@@ -206,21 +276,21 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
                             "twitter": MetadataViews.ExternalURL("https://twitter.com/flow_blockchain")
                         }
                     )
-                case Type<MetadataViews.Traits>():
-                    // exclude mintedTime and foo to show other uses of Traits
-                    let excludedTraits = ["mintedTime", "foo"]
-                    let traitsView = MetadataViews.dictToTraits(dict: self.metadata, excludedNames: excludedTraits)
+                // case Type<MetadataViews.Traits>():
+                //     // exclude mintedTime and foo to show other uses of Traits
+                //     let excludedTraits = ["mintedTime", "foo"]
+                //     let traitsView = MetadataViews.dictToTraits(dict: self.metadata, excludedNames: excludedTraits)
 
-                    // mintedTime is a unix timestamp, we should mark it with a displayType so platforms know how to show it.
-                    let mintedTimeTrait = MetadataViews.Trait(name: "mintedTime", value: self.metadata["mintedTime"]!, displayType: "Date", rarity: nil)
-                    traitsView.addTrait(mintedTimeTrait)
+                //     // mintedTime is a unix timestamp, we should mark it with a displayType so platforms know how to show it.
+                //     let mintedTimeTrait = MetadataViews.Trait(name: "mintedTime", value: self.metadata["mintedTime"]!, displayType: "Date", rarity: nil)
+                //     traitsView.addTrait(mintedTimeTrait)
 
-                    // foo is a trait with its own rarity
-                    let fooTraitRarity = MetadataViews.Rarity(score: 10.0, max: 100.0, description: "Common")
-                    let fooTrait = MetadataViews.Trait(name: "foo", value: self.metadata["foo"], displayType: nil, rarity: fooTraitRarity)
-                    traitsView.addTrait(fooTrait)
+                //     // foo is a trait with its own rarity
+                //     let fooTraitRarity = MetadataViews.Rarity(score: 10.0, max: 100.0, description: "Common")
+                //     let fooTrait = MetadataViews.Trait(name: "foo", value: self.metadata["foo"], displayType: nil, rarity: fooTraitRarity)
+                //     traitsView.addTrait(fooTrait)
 
-                    return traitsView
+                //     return traitsView
 
             }
             return nil
@@ -344,51 +414,13 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
         return <- create Collection()
     }
 
-    // Resource that an admin or something similar would own to be
-    // able to mint new NFTs
-    //
-    pub resource NFTMinter {
+    pub fun getCardMetadata(_ metadataId: String): &CardMetadata{CardMetadataPublic}? {
+		return &(self.cardMetadatas[metadataId]! as  &CardMetadata{CardMetadataPublic})
+	}
 
-        // Mints a new NFT with a new ID and deposit it in the
-        // recipients collection using their collection reference
-        //
-        // @param recipient: A capability to the collection where the new NFT will be deposited
-        // @param name: The name for the NFT metadata
-        // @param description: The description for the NFT metadata
-        // @param thumbnail: The thumbnail for the NFT metadata
-        // @param royalties: An array of Royalty structs, see MetadataViews docs
-        //
-        pub fun mintNFT(
-            recipient: &{NonFungibleToken.CollectionPublic},
-            text: String,
-            type: CardType,
-            thumbnail: String,
-            royalties: [MetadataViews.Royalty]
-        ) {
-            let metadata: {String: AnyStruct} = {}
-            let currentBlock = getCurrentBlock()
-            metadata["mintedBlock"] = currentBlock.height
-            metadata["mintedTime"] = currentBlock.timestamp
-            metadata["minter"] = recipient.owner!.address
-
-            // FAHCard Metadata
-            metadata["foo"] = "bar"
-
-            // create a new NFT
-            var newNFT <- create NFT(
-                id: FAHCards.totalSupply,
-                text: text,
-                type: type,
-                thumbnail: thumbnail,
-                royalties: royalties,
-                metadata: metadata,
-            )
-
-            // deposit it in the recipient's account using their reference
-            recipient.deposit(token: <-newNFT)
-
-            FAHCards.totalSupply = FAHCards.totalSupply + 1
-        }
+    // Get Admin interface to CardMetadata
+    access(account) fun getCardMetadataAdmin(_ metadataId: String): &CardMetadata{CardMetadataAdmin}? {
+        return &(self.cardMetadatas[metadataId]! as  &CardMetadata{CardMetadataAdmin})
     }
 
     // Function that resolves a metadata view for this contract.
@@ -465,10 +497,6 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
             self.CollectionPublicPath,
             target: self.CollectionStoragePath
         )
-
-        // Create a Minter resource and save it to storage
-        let minter <- create NFTMinter()
-        self.account.save(<-minter, to: self.MinterStoragePath)
 
         emit ContractInitialized()
     }

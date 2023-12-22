@@ -3,7 +3,9 @@
 *  
 *
 */
+import FungibleToken from "./utility/FungibleToken.cdc"
 import MetadataViews from "./utility/MetadataViews.cdc"
+import Profile from "./find/Profile.cdc"
 
 pub contract FAHRoyalties {
     pub var globalCard: [MetadataViews.Royalty]
