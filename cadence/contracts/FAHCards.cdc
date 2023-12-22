@@ -28,10 +28,11 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
     pub let CollectionPublicPath: PublicPath
     pub let MinterStoragePath: StoragePath
 
-	access(account) let cardMetadatas: {String: CardMetadata}
+	access(self) let cardMetadatas: {String: CardMetadata}
+    access(self) let cardSetMetadatas: {String: CardSetMetadata}
 
     // Map of the oringal owners/minters of a FAHCard
-    access(contract) let orginalOwner: {Address: {UInt64: [UInt64]}}
+    access(self) let orginalOwner: {Address: {UInt64: [UInt64]}}
 
     // FAHCard Types
     pub enum CardType: UInt8 {
@@ -59,6 +60,130 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
     pub struct interface CardMetadataAdmin {
         pub fun incrementInCirculation()
         pub fun purchased(serial: UInt64, buyer: Address)
+    }
+
+    // Public CardSetMetaData Interface
+    pub struct interface CardSetMetadataPublic {
+        pub fun getMetadataId(): String
+        pub fun getName(): String
+        pub fun getDescription(): String
+        pub fun getQuestionCards(): [String]
+        pub fun getResponseCards(): [String]
+        pub fun getImage(): MetadataViews.IPFSFile
+        pub fun getThumbnail(): MetadataViews.IPFSFile
+        pub fun getMaxSupply(): UInt64
+        pub fun getInCiculation(): UInt64
+    }
+
+    // Admin CardSetMetaData Interface
+    pub struct interface CardSetMetadataAdmin {
+        pub fun incrementMaxSupply()
+        pub fun incrementInCirculation()
+        pub fun appendCardMetadataId(_metadataId: String, _type: CardType)
+        pub fun purchased(serial: UInt64, buyer: Address)
+    }
+
+    // Metadata struct for defining CardSets
+    pub struct CardSetMetadata: CardSetMetadataPublic, CardSetMetadataAdmin {
+        access(self) let metadataId: String
+		access(self) let name: String
+        access(self) let description: String
+        access(self) let questionCards: [String]
+        access(self) let responseCards: [String]
+        
+		access(self) var image: MetadataViews.IPFSFile
+		access(self) var thumbnail: MetadataViews.IPFSFile
+        access(self) var maxSupply: UInt64
+        access(self) var inCirculation: UInt64
+        access(self) let owners: {UInt64: Address}
+
+        // Holder for extra/future metadata
+        pub var extra: {String: AnyStruct}
+
+        // GETTERS
+        pub fun getMetadataId(): String {
+            return self.metadataId
+        }
+
+        pub fun getName(): String {
+            return self.name
+        }
+
+        pub fun getDescription(): String {
+            return self.description
+        }
+
+        pub fun getQuestionCards(): [String] {
+            return self.questionCards
+        }
+
+        pub fun getResponseCards(): [String] {
+            return self.responseCards
+        }
+
+        pub fun getImage(): MetadataViews.IPFSFile {
+            return self.image
+        }
+
+        pub fun getThumbnail(): MetadataViews.IPFSFile {
+            return self.thumbnail
+        }
+
+        pub fun getMaxSupply(): UInt64 {
+            return self.maxSupply
+        }
+
+        pub fun getInCiculation(): UInt64 {
+            return self.inCirculation
+        }
+
+        // SETTERS
+        pub fun appendCardMetadataId(_metadataId: String, _type: CardType) {
+            if _type == FAHCards.CardType.ANSWER {
+                self.responseCards.append(_metadataId)
+            } else {
+                self.questionCards.append(_metadataId)
+            }
+        }
+
+        pub fun incrementMaxSupply() {
+            self.maxSupply = self.maxSupply + 1
+        }
+
+        pub fun incrementInCirculation() {
+            self.inCirculation = self.inCirculation + 1
+        }
+
+		pub fun purchased(serial: UInt64, buyer: Address) {
+			self.owners[serial] = buyer
+		}
+
+		init(_name: String, _description: String, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile, _extra: {String: AnyStruct}) {
+            let hashArray = HashAlgorithm.SHA3_256.hash(_name.utf8)
+            let _metadataId = ""
+            for hash in hashArray {
+                _metadataId.concat(hash.toString())
+            }
+
+            // Check if a card set with this same name already exists
+            if FAHCards.cardSetMetadatas[_metadataId] != nil {
+                panic("A CardSet with this name already exists.")
+            }
+
+
+            self.metadataId = _metadataId
+            self.name = _name
+			self.description = _description
+            self.image = _image
+			self.thumbnail = _thumbnail
+            self.extra = _extra
+
+            self.maxSupply = 0
+            self.inCirculation = 0
+            self.questionCards = []
+            self.responseCards = []
+            self.owners = {}
+		}
     }
 
     // Metadata struct for defining FAHCards
@@ -423,6 +548,22 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
         return &(self.cardMetadatas[metadataId]! as  &CardMetadata{CardMetadataAdmin})
     }
 
+    pub fun getCardSetMetadata(_ metadataId: String): &CardSetMetadata{CardSetMetadataPublic}? {
+		return &(self.cardSetMetadatas[metadataId]! as  &CardSetMetadata{CardSetMetadataPublic})
+	}
+
+    // Get Admin interface to CardMetadata
+    access(account) fun getCardSetMetadataAdmin(_ metadataId: String): &CardSetMetadata{CardSetMetadataAdmin}? {
+        return &(self.cardSetMetadatas[metadataId]! as  &CardSetMetadata{CardSetMetadataAdmin})
+    }
+
+    pub fun createCardSetMetadata(_name: String, _description: String, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile, _extra: {String: AnyStruct}): String {
+        let metadata = CardSetMetadata(_name: _name, _description: _description, _image: _image, _thumbnail: _thumbnail, _extra: {})
+        FAHCards.cardSetMetadatas[metadata.metadataId] = metadata
+
+        return metadata.metadataId
+    }
+
     // Function that resolves a metadata view for this contract.
     //
     // @param view: The Type of the desired view.
@@ -486,6 +627,7 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
 
         // Set empty dicts/arrays
         self.cardMetadatas = {}
+        self.cardSetMetadatas = {}
         self.orginalOwner = {}
 
         // Create a Collection resource and save it to storage

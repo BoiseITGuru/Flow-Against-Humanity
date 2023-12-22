@@ -39,20 +39,13 @@ pub contract FAHCardSets: NonFungibleToken, ViewResolver {
     pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
         pub let id: UInt64
         pub let metadataId: String
-		pub let name: String
-        pub let description: String
-        pub let questionCards: [String]
-        pub let responseCards: [String]
-        
-		pub var image: MetadataViews.IPFSFile
-		pub var thumbnail: MetadataViews.IPFSFile
-        pub var maxSupply: UInt64
-        pub var inCirculation: UInt64
 
-        // Holder for extra/future metadata
-        pub var extra: {String: AnyStruct}
+        pub fun getMetadata(): &FAHCards.CardSetMetadata{FAHCards.CardSetMetadataPublic}? {
+			return FAHCards.getCardSetMetadata(self.metadataId)
+		}
 
         pub fun createCardMetadata(_text: String, _type: FAHCards.CardType, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile, _maxSupply: UInt64) {
+            let setMetadata = FAHCards.getCardSetMetadataAdmin(self.metadataId) ?? panic("Could not get Card Set Metadata")
             let hashArray = HashAlgorithm.SHA3_256.hash(_text.utf8.concat(_type.rawValue.toString().utf8))
             let cardMetadataId = ""
             for hash in hashArray {
@@ -64,15 +57,9 @@ pub contract FAHCardSets: NonFungibleToken, ViewResolver {
                 panic("A Card with this text and type already exists.")
             }
 
-            FAHCards.cardMetadatas[cardMetadataId] = FAHCards.CardMetadata(_cardSetId: self.metadataId, _cardSetAuthor: self.owner!.address, _text: _text, _type: _type, _image: _image, _thumbnail: _thumbnail, _maxSupply: _maxSupply, _extra: {})
-
-            if _type == FAHCards.CardType.ANSWER {
-                self.responseCards.append(cardMetadataId)
-            } else {
-                self.questionCards.append(cardMetadataId)
-            }
-
-            self.maxSupply = self.maxSupply + _maxSupply
+            let cardMetadata = FAHCards.CardMetadata(_cardSetId: self.metadataId, _cardSetAuthor: self.owner!.address, _text: _text, _type: _type, _image: _image, _thumbnail: _thumbnail, _maxSupply: _maxSupply, _extra: {})
+            setMetadata.appendCardMetadataId(_metadataId: cardMetadataId, _type: cardMetadata.getCardType())
+            setMetadata.incrementMaxSupply()
         }
 
         // mintCard mints a new FAHCard NFT and depsits
@@ -81,19 +68,9 @@ pub contract FAHCardSets: NonFungibleToken, ViewResolver {
             
         }
 
-		init(_metadataId: String, _name: String, _description: String, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile, _extra: {String: AnyStruct}) {
+		init(_metadataId: String) {
             self.id = self.uuid
             self.metadataId = _metadataId
-            self.name = _name
-			self.description = _description
-            self.image = _image
-			self.thumbnail = _thumbnail
-            self.extra = _extra
-
-            self.maxSupply = 0
-            self.inCirculation = 0
-            self.questionCards = []
-            self.responseCards = []
 		}
 	
         pub fun getViews(): [Type] {
@@ -109,12 +86,13 @@ pub contract FAHCardSets: NonFungibleToken, ViewResolver {
         }
 
         pub fun resolveView(_ view: Type): AnyStruct? {
+            let metadata = FAHCards.cardSetMetadatas[self.metadataId] ?? panic("couldn't find Card Set Metadata")
             switch view {
                 case Type<MetadataViews.Display>():
 					return MetadataViews.Display(
-						name: "FAH Card Set: ".concat(self.name),
-						description: self.description,
-						thumbnail: self.thumbnail
+						name: "FAH Card Set: ".concat(metadata.name),
+						description: metadata.description,
+						thumbnail: metadata.thumbnail
 					)
                 case Type<MetadataViews.ExternalURL>():
                     return MetadataViews.ExternalURL("https://fah.boiseitguru.dev/sets/".concat(self.metadataId))
@@ -152,10 +130,10 @@ pub contract FAHCardSets: NonFungibleToken, ViewResolver {
                     )
                 case Type<MetadataViews.Traits>():
 					let traits = MetadataViews.Traits([
-                        MetadataViews.Trait(name: "Number Questions", value: self.questionCards.length, displayType: nil, rarity: nil),
-                        MetadataViews.Trait(name: "Number Responses", value: self.responseCards.length, displayType: nil, rarity: nil),
-                        MetadataViews.Trait(name: "Max Supply", value: self.maxSupply, displayType: nil, rarity: nil),
-                        MetadataViews.Trait(name: "In Circulation", value: self.inCirculation, displayType: nil, rarity: nil)
+                        MetadataViews.Trait(name: "Number Questions", value: metadata.questionCards.length, displayType: nil, rarity: nil),
+                        MetadataViews.Trait(name: "Number Responses", value: metadata.responseCards.length, displayType: nil, rarity: nil),
+                        MetadataViews.Trait(name: "Max Supply", value: metadata.maxSupply, displayType: nil, rarity: nil),
+                        MetadataViews.Trait(name: "In Circulation", value: metadata.inCirculation, displayType: nil, rarity: nil)
                     ])
                 case Type<MetadataViews.NFTView>():
 					return MetadataViews.NFTView(
@@ -230,18 +208,10 @@ pub contract FAHCardSets: NonFungibleToken, ViewResolver {
 
         pub fun createEmptyCardSet(_name: String, _description: String, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile) {
             let author = self.owner!.address
-            let hashArray = HashAlgorithm.SHA3_256.hash(_name.utf8)
-            let metadataId = ""
-            for hash in hashArray {
-                metadataId.concat(hash.toString())
-            }
+            
+            let metadataId = FAHCards.createCardSetMetadata(_name: _name, _description: _description, _image: _image, _thumbnail: _thumbnail, _extra: {})
 
-            // Check if a card set with this same name already exists
-            if FAHCardSets.cardSets[metadataId] != nil {
-                panic("A CardSet with this name already exists.")
-            }
-
-            let cardSet <- create NFT(_metadataId: metadataId, _name: _name, _description: _description, _image: _image, _thumbnail: _thumbnail, _extra: {})
+            let cardSet <- create NFT(_metadataId: metadataId)
             self.authoredSets[metadataId] = cardSet.uuid
             self.ownedNFTs[cardSet.uuid] <-! cardSet
 
