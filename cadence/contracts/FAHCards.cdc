@@ -29,7 +29,7 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
     pub let MinterStoragePath: StoragePath
 
 	access(self) let cardMetadatas: {String: CardMetadata}
-    access(self) let cardSetMetadatas: {String: CardSetMetadata}
+    access(self) let cardDeckMetadatas: {String: CardDeckMetadata}
 
     // Map of the oringal owners/minters of a FAHCard
     access(self) let orginalOwner: {Address: {UInt64: [UInt64]}}
@@ -44,8 +44,8 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
 
     // Public CardMetaData Interface
     pub struct interface CardMetadataPublic {
-        pub fun getCardSetId(): String
-        pub fun getCardSetAuthor(): Address
+        pub fun getCardDeckId(): String
+        pub fun getCardDeckAuthor(): Address
         pub fun getText(): String
         pub fun getCardType(): CardType
         pub fun getImage(): MetadataViews.IPFSFile
@@ -62,8 +62,8 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
         pub fun purchased(serial: UInt64, buyer: Address)
     }
 
-    // Public CardSetMetaData Interface
-    pub struct interface CardSetMetadataPublic {
+    // Public CardDeckMetaData Interface
+    pub struct interface CardDeckMetadataPublic {
         pub fun getMetadataId(): String
         pub fun getName(): String
         pub fun getDescription(): String
@@ -75,16 +75,16 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
         pub fun getInCiculation(): UInt64
     }
 
-    // Admin CardSetMetaData Interface
-    pub struct interface CardSetMetadataAdmin {
+    // Admin CardDeckMetaData Interface
+    pub struct interface CardDeckMetadataAdmin {
         pub fun incrementMaxSupply()
         pub fun incrementInCirculation()
         pub fun appendCardMetadataId(_metadataId: String, _type: CardType)
         pub fun purchased(serial: UInt64, buyer: Address)
     }
 
-    // Metadata struct for defining CardSets
-    pub struct CardSetMetadata: CardSetMetadataPublic, CardSetMetadataAdmin {
+    // Metadata struct for defining CardDecks
+    pub struct CardDeckMetadata: CardDeckMetadataPublic, CardDeckMetadataAdmin {
         access(self) let metadataId: String
 		access(self) let name: String
         access(self) let description: String
@@ -166,8 +166,8 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
             }
 
             // Check if a card set with this same name already exists
-            if FAHCards.cardSetMetadatas[_metadataId] != nil {
-                panic("A CardSet with this name already exists.")
+            if FAHCards.cardDeckMetadatas[_metadataId] != nil {
+                panic("A CardDeck with this name already exists.")
             }
 
 
@@ -188,8 +188,8 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
 
     // Metadata struct for defining FAHCards
     pub struct CardMetadata: CardMetadataPublic, CardMetadataAdmin {
-        access(self) let cardSetId: String
-        access(self) let cardSetAuthor: Address
+        access(self) let cardDeckId: String
+        access(self) let cardDeckAuthor: Address
 		access(self) let text: String
         access(self) let type: CardType
 		access(self) let image: MetadataViews.IPFSFile
@@ -200,12 +200,12 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
         access(self) var inCirculation: UInt64
 
         // GETTERS
-        pub fun getCardSetId(): String {
-            return self.cardSetId
+        pub fun getCardDeckId(): String {
+            return self.cardDeckId
         }
 
-        pub fun getCardSetAuthor(): Address {
-            return self.cardSetAuthor
+        pub fun getCardDeckAuthor(): Address {
+            return self.cardDeckAuthor
         }
 
         pub fun getText(): String {
@@ -249,9 +249,9 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
 			self.owners[serial] = buyer
 		}
 
-		init(_cardSetId: String, _cardSetAuthor: Address, _text: String, _type: CardType, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile, _maxSupply: UInt64, _extra: {String: AnyStruct}) {
-			self.cardSetId = _cardSetId
-            self.cardSetAuthor = _cardSetAuthor
+		init(_cardDeckId: String, _cardDeckAuthor: Address, _text: String, _type: CardType, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile, _maxSupply: UInt64, _extra: {String: AnyStruct}) {
+			self.cardDeckId = _cardDeckId
+            self.cardDeckAuthor = _cardDeckAuthor
             self.text = _text
 			self.type = _type
 			self.image = _image
@@ -351,7 +351,7 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
                         self.id
                     )
                 case Type<MetadataViews.Royalties>():
-                    let author = metadata.getCardSetAuthor()
+                    let author = metadata.getCardDeckAuthor()
                     let profile = Profile.find(author)
                     let findName = profile.getFindName()
                     let authorName = profile.getName().concat(" (").concat(findName == "" ? author.toString() : findName).concat(")")
@@ -361,8 +361,8 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
 
                     royalties.append(MetadataViews.Royalty(
                         receiver: authorVault,
-                        cut: FAHRoyalties.authorCardSet,
-                        description: authorName.concat(" receives a ").concat((FAHRoyalties.authorCardSet * 100.0).toString()).concat("% royalty from secondary sales for authoring this FAH Card Set")
+                        cut: FAHRoyalties.authorCardDeck,
+                        description: authorName.concat(" receives a ").concat((FAHRoyalties.authorCardDeck * 100.0).toString()).concat("% royalty from secondary sales for authoring this FAH Card Set")
                     ))
 
                     for royalty in FAHRoyalties.globalCard {
@@ -548,18 +548,18 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
         return &(self.cardMetadatas[metadataId]! as  &CardMetadata{CardMetadataAdmin})
     }
 
-    pub fun getCardSetMetadata(_ metadataId: String): &CardSetMetadata{CardSetMetadataPublic}? {
-		return &(self.cardSetMetadatas[metadataId]! as  &CardSetMetadata{CardSetMetadataPublic})
+    pub fun getCardDeckMetadata(_ metadataId: String): &CardDeckMetadata{CardDeckMetadataPublic}? {
+		return &(self.cardDeckMetadatas[metadataId]! as  &CardDeckMetadata{CardDeckMetadataPublic})
 	}
 
     // Get Admin interface to CardMetadata
-    access(account) fun getCardSetMetadataAdmin(_ metadataId: String): &CardSetMetadata{CardSetMetadataAdmin}? {
-        return &(self.cardSetMetadatas[metadataId]! as  &CardSetMetadata{CardSetMetadataAdmin})
+    access(account) fun getCardDeckMetadataAdmin(_ metadataId: String): &CardDeckMetadata{CardDeckMetadataAdmin}? {
+        return &(self.cardDeckMetadatas[metadataId]! as  &CardDeckMetadata{CardDeckMetadataAdmin})
     }
 
-    pub fun createCardSetMetadata(_name: String, _description: String, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile, _extra: {String: AnyStruct}): String {
-        let metadata = CardSetMetadata(_name: _name, _description: _description, _image: _image, _thumbnail: _thumbnail, _extra: {})
-        FAHCards.cardSetMetadatas[metadata.metadataId] = metadata
+    pub fun createCardDeckMetadata(_name: String, _description: String, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile, _extra: {String: AnyStruct}): String {
+        let metadata = CardDeckMetadata(_name: _name, _description: _description, _image: _image, _thumbnail: _thumbnail, _extra: {})
+        FAHCards.cardDeckMetadatas[metadata.metadataId] = metadata
 
         return metadata.metadataId
     }
@@ -627,7 +627,7 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
 
         // Set empty dicts/arrays
         self.cardMetadatas = {}
-        self.cardSetMetadatas = {}
+        self.cardDeckMetadatas = {}
         self.orginalOwner = {}
 
         // Create a Collection resource and save it to storage

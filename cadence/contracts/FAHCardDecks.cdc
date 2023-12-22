@@ -12,8 +12,8 @@ import FAHCards from "./FAHCards.cdc"
 import FAHRoyalties from "./FAHRoyalties.cdc"
 import Profile from "./find/Profile.cdc"
 
-pub contract FAHCardSets: NonFungibleToken, ViewResolver {
-    // Total supply of FAHCardSets in existence
+pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
+    // Total supply of FAHCardDecks in existence
     pub var totalSupply: UInt64
 
     // The event that is emitted when the contract is created
@@ -30,22 +30,22 @@ pub contract FAHCardSets: NonFungibleToken, ViewResolver {
     pub let CollectionPublicPath: PublicPath
     pub let CollectionPrivatePath: PrivatePath
 
-    // Maps the owner of a CardSet to the hash of CardSetMetadatas name then
-    // to each individual CardSetMetadatas struct.
-    access(account) let cardSetOwners: {Address: [String]}
-	access(account) let cardSets: {String: Address}
+    // Maps the owner of a CardDeck to the hash of CardDeckMetadatas name then
+    // to each individual CardDeckMetadatas struct.
+    access(account) let cardDeckOwners: {Address: [String]}
+	access(account) let cardDecks: {String: Address}
 
-    // Metadata struct for defining CardSets
+    // Metadata struct for defining CardDecks
     pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
         pub let id: UInt64
         pub let metadataId: String
 
-        pub fun getMetadata(): &FAHCards.CardSetMetadata{FAHCards.CardSetMetadataPublic}? {
-			return FAHCards.getCardSetMetadata(self.metadataId)
+        pub fun getMetadata(): &FAHCards.CardDeckMetadata{FAHCards.CardDeckMetadataPublic}? {
+			return FAHCards.getCardDeckMetadata(self.metadataId)
 		}
 
         pub fun createCardMetadata(_text: String, _type: FAHCards.CardType, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile, _maxSupply: UInt64) {
-            let setMetadata = FAHCards.getCardSetMetadataAdmin(self.metadataId) ?? panic("Could not get Card Set Metadata")
+            let setMetadata = FAHCards.getCardDeckMetadataAdmin(self.metadataId) ?? panic("Could not get Card Set Metadata")
             let hashArray = HashAlgorithm.SHA3_256.hash(_text.utf8.concat(_type.rawValue.toString().utf8))
             let cardMetadataId = ""
             for hash in hashArray {
@@ -57,7 +57,7 @@ pub contract FAHCardSets: NonFungibleToken, ViewResolver {
                 panic("A Card with this text and type already exists.")
             }
 
-            let cardMetadata = FAHCards.CardMetadata(_cardSetId: self.metadataId, _cardSetAuthor: self.owner!.address, _text: _text, _type: _type, _image: _image, _thumbnail: _thumbnail, _maxSupply: _maxSupply, _extra: {})
+            let cardMetadata = FAHCards.CardMetadata(_cardDeckId: self.metadataId, _cardDeckAuthor: self.owner!.address, _text: _text, _type: _type, _image: _image, _thumbnail: _thumbnail, _maxSupply: _maxSupply, _extra: {})
             setMetadata.appendCardMetadataId(_metadataId: cardMetadataId, _type: cardMetadata.getCardType())
             setMetadata.incrementMaxSupply()
         }
@@ -86,7 +86,7 @@ pub contract FAHCardSets: NonFungibleToken, ViewResolver {
         }
 
         pub fun resolveView(_ view: Type): AnyStruct? {
-            let metadata = FAHCards.cardSetMetadatas[self.metadataId] ?? panic("couldn't find Card Set Metadata")
+            let metadata = FAHCards.cardDeckMetadatas[self.metadataId] ?? panic("couldn't find Card Set Metadata")
             switch view {
                 case Type<MetadataViews.Display>():
 					return MetadataViews.Display(
@@ -98,14 +98,14 @@ pub contract FAHCardSets: NonFungibleToken, ViewResolver {
                     return MetadataViews.ExternalURL("https://fah.boiseitguru.dev/sets/".concat(self.metadataId))
                 case Type<MetadataViews.NFTCollectionData>():
                     return MetadataViews.NFTCollectionData(
-						storagePath: FAHCardSets.CollectionStoragePath,
-						publicPath: FAHCardSets.CollectionPublicPath,
-						providerPath: FAHCardSets.CollectionPrivatePath,
+						storagePath: FAHCardDecks.CollectionStoragePath,
+						publicPath: FAHCardDecks.CollectionPublicPath,
+						providerPath: FAHCardDecks.CollectionPrivatePath,
 						publicCollection: Type<&Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(),
 						publicLinkedType: Type<&Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(),
 						providerLinkedType: Type<&Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, NonFungibleToken.Provider}>(),
 						createEmptyCollectionFunction: (fun (): @NonFungibleToken.Collection {
-								return <- FAHCardSets.createEmptyCollection()
+								return <- FAHCardDecks.createEmptyCollection()
 						})
 					)
                 case Type<MetadataViews.Royalties>():
@@ -117,11 +117,11 @@ pub contract FAHCardSets: NonFungibleToken, ViewResolver {
 
                     let royalties = [MetadataViews.Royalty(
                         receiver: authorVault,
-                        cut: FAHRoyalties.authorCardSet,
-                        description: authorName.concat(" receives a ").concat((FAHRoyalties.authorCardSet * 100.0).toString()).concat("% royalty from secondary sales for authoring this FAH Card Set")
+                        cut: FAHRoyalties.authorCardDeck,
+                        description: authorName.concat(" receives a ").concat((FAHRoyalties.authorCardDeck * 100.0).toString()).concat("% royalty from secondary sales for authoring this FAH Card Set")
                     )]
                     
-                    for royalty in FAHRoyalties.globalCardSet {
+                    for royalty in FAHRoyalties.globalCardDeck {
                         royalties.append(royalty)
                     }
                 case Type<MetadataViews.Serial>():
@@ -153,12 +153,12 @@ pub contract FAHCardSets: NonFungibleToken, ViewResolver {
 
     // Defines the methods that are particular to this NFT contract collection
     //
-    pub resource interface FAHCardSetCollectionPublic {
+    pub resource interface FAHCardDeckCollectionPublic {
         pub fun deposit(token: @NonFungibleToken.NFT)
         pub fun getIDs(): [UInt64]
         pub fun getMetadataIds(): [String]
         pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT
-        pub fun borrowCardSet(metadataId: String): &FAHCardSets.NFT? {
+        pub fun borrowCardDeck(metadataId: String): &FAHCardDecks.NFT? {
             post {
                 (result == nil) || (result?.metadataId == metadataId):
                     "Cannot borrow FAHCards reference: the ID of the returned reference is incorrect"
@@ -166,8 +166,8 @@ pub contract FAHCardSets: NonFungibleToken, ViewResolver {
         }
     }
 
-    pub resource Collection: FAHCardSetCollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection {
-        // dictionary of authored CardSets
+    pub resource Collection: FAHCardDeckCollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection {
+        // dictionary of authored CardDecks
         pub let authoredSets: {String: UInt64}
         pub var ownedNFTs: @{UInt64: NonFungibleToken.NFT}
 
@@ -196,8 +196,8 @@ pub contract FAHCardSets: NonFungibleToken, ViewResolver {
             panic("TODO")
         }
 
-        // TODO: Implement borrowCardSet()
-        pub fun borrowCardSet(metadataId: String): &FAHCardSets.NFT? {
+        // TODO: Implement borrowCardDeck()
+        pub fun borrowCardDeck(metadataId: String): &FAHCardDecks.NFT? {
             panic("TODO")
         }
 
@@ -206,21 +206,21 @@ pub contract FAHCardSets: NonFungibleToken, ViewResolver {
             panic("TODO")
         }
 
-        pub fun createEmptyCardSet(_name: String, _description: String, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile) {
+        pub fun createEmptyCardDeck(_name: String, _description: String, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile) {
             let author = self.owner!.address
             
-            let metadataId = FAHCards.createCardSetMetadata(_name: _name, _description: _description, _image: _image, _thumbnail: _thumbnail, _extra: {})
+            let metadataId = FAHCards.createCardDeckMetadata(_name: _name, _description: _description, _image: _image, _thumbnail: _thumbnail, _extra: {})
 
-            let cardSet <- create NFT(_metadataId: metadataId)
-            self.authoredSets[metadataId] = cardSet.uuid
-            self.ownedNFTs[cardSet.uuid] <-! cardSet
+            let cardDeck <- create NFT(_metadataId: metadataId)
+            self.authoredSets[metadataId] = cardDeck.uuid
+            self.ownedNFTs[cardDeck.uuid] <-! cardDeck
 
-            // Map author to CardSet
-            FAHCardSets.cardSets[metadataId] = author
-            if let cardSets = &FAHCardSets.cardSetOwners[author] as &[String]? {
-                cardSets.append(metadataId)
+            // Map author to CardDeck
+            FAHCardDecks.cardDecks[metadataId] = author
+            if let cardDecks = &FAHCardDecks.cardDeckOwners[author] as &[String]? {
+                cardDecks.append(metadataId)
             } else {
-                FAHCardSets.cardSetOwners[author] = [metadataId]
+                FAHCardDecks.cardDeckOwners[author] = [metadataId]
             }
         }
 
@@ -234,9 +234,9 @@ pub contract FAHCardSets: NonFungibleToken, ViewResolver {
 		}
     }
 
-    // Allows anyone to create a new empty CardSetCollection
+    // Allows anyone to create a new empty CardDeckCollection
     //
-    // @return a new CardSetCollection resource
+    // @return a new CardDeckCollection resource
     //
     pub fun createEmptyCollection(): @Collection {
         return <- create Collection()
@@ -266,12 +266,12 @@ pub contract FAHCardSets: NonFungibleToken, ViewResolver {
         self.totalSupply = 0
 
         // Set empty dicts/arrays
-        self.cardSetOwners = {}
-        self.cardSets = {}
+        self.cardDeckOwners = {}
+        self.cardDecks = {}
 
         // Set the named paths
-        self.CollectionStoragePath = /storage/FAHCardSetCollection
-        self.CollectionPublicPath = /public/FAHCardSetCollection
-        self.CollectionPrivatePath = /private/FAHCardSetCollection
+        self.CollectionStoragePath = /storage/FAHCardDeckCollection
+        self.CollectionPublicPath = /public/FAHCardDeckCollection
+        self.CollectionPrivatePath = /private/FAHCardDeckCollection
     }
 }
