@@ -30,15 +30,13 @@
 <!-- PROJECT LOGO -->
 <br />
   <a href="https://github.com/BoiseITGuru/Flow-Against-Humanity">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+    <img src="images/logo.png" alt="Logo">
   </a>
 
-<h3 align="center">Flow Against Humanity</h3>
-
   <p align="center">
-    A Web3 card game based on Cards Against Humanity
-    <br />
     <a href="https://fah.boiseitguru.com"><strong>Play Now!</strong></a>
+    <br />
+    based on the epic card game "Cards Against Humanity"
     <br />
     <br />
     <a href="https://github.com/BoiseITGuru/Flow-Against-Humanity">Explore the docs</a>
