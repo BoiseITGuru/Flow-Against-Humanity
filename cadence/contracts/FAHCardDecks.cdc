@@ -45,21 +45,10 @@ pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
 		}
 
         pub fun createCardMetadata(_text: String, _type: FAHCards.CardType, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile, _maxSupply: UInt64) {
-            let setMetadata = FAHCards.getCardDeckMetadataAdmin(self.metadataId) ?? panic("Could not get Card Set Metadata")
-            let hashArray = HashAlgorithm.SHA3_256.hash(_text.utf8.concat(_type.rawValue.toString().utf8))
-            let cardMetadataId = ""
-            for hash in hashArray {
-                cardMetadataId.concat(hash.toString())
-            }
-
-            // Check if a card set with this same name already exists
-            if FAHCards.cardMetadatas[cardMetadataId] != nil {
-                panic("A Card with this text and type already exists.")
-            }
-
-            let cardMetadata = FAHCards.CardMetadata(_cardDeckId: self.metadataId, _cardDeckAuthor: self.owner!.address, _text: _text, _type: _type, _image: _image, _thumbnail: _thumbnail, _maxSupply: _maxSupply, _extra: {})
-            setMetadata.appendCardMetadataId(_metadataId: cardMetadataId, _type: cardMetadata.getCardType())
-            setMetadata.incrementMaxSupply()
+            let setMetadata = FAHCards.getCardDeckMetadataAdmin(self.metadataId) ?? panic("Could not get Card Deck Metadata")
+            let cardMetadataId = FAHCards.createCardMetadata(_cardDeckId: self.metadataId, _cardDeckAuthor: self.owner!.address, _text: _text, _type: _type, _image: _image, _thumbnail: _thumbnail, _maxSupply: _maxSupply, _extra: {})
+            setMetadata.appendCardMetadataId(cardMetadataId)
+            setMetadata.incrementMaxSupply(cardMetadataId)
         }
 
         // mintCard mints a new FAHCard NFT and depsits

@@ -77,9 +77,9 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
 
     // Admin CardDeckMetaData Interface
     pub struct interface CardDeckMetadataAdmin {
-        pub fun incrementMaxSupply()
+        pub fun incrementMaxSupply(_ _metadataId: String)
         pub fun incrementInCirculation()
-        pub fun appendCardMetadataId(_metadataId: String, _type: CardType)
+        pub fun appendCardMetadataId(_ _metadataId: String)
         pub fun purchased(serial: UInt64, buyer: Address)
     }
 
@@ -138,7 +138,12 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
         }
 
         // SETTERS
-        pub fun appendCardMetadataId(_metadataId: String, _type: CardType) {
+        pub fun appendCardMetadataId(_ _metadataId: String) {
+            pre {
+                FAHCards.cardMetadatas[_metadataId] != nil : "Invalid Card Metadata Id"
+            }
+
+            let _type = FAHCards.cardMetadatas[_metadataId]!.getCardType()
             if _type == FAHCards.CardType.ANSWER {
                 self.responseCards.append(_metadataId)
             } else {
@@ -146,8 +151,12 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
             }
         }
 
-        pub fun incrementMaxSupply() {
-            self.maxSupply = self.maxSupply + 1
+        pub fun incrementMaxSupply(_ _metadataId: String) {
+            pre {
+                FAHCards.cardMetadatas[_metadataId] != nil : "Invalid Card Metadata Id"
+            }
+            let _maxSupply = FAHCards.cardMetadatas[_metadataId]!.getMaxSupply()
+            self.maxSupply = self.maxSupply + _maxSupply
         }
 
         pub fun incrementInCirculation() {
@@ -188,6 +197,7 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
 
     // Metadata struct for defining FAHCards
     pub struct CardMetadata: CardMetadataPublic, CardMetadataAdmin {
+        access(self) let metadataId: String
         access(self) let cardDeckId: String
         access(self) let cardDeckAuthor: Address
 		access(self) let text: String
@@ -250,7 +260,19 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
 		}
 
 		init(_cardDeckId: String, _cardDeckAuthor: Address, _text: String, _type: CardType, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile, _maxSupply: UInt64, _extra: {String: AnyStruct}) {
-			self.cardDeckId = _cardDeckId
+			let hashArray = HashAlgorithm.SHA3_256.hash(_text.utf8.concat(_type.rawValue.toString().utf8))
+            let _metadataId = ""
+            for hash in hashArray {
+                _metadataId.concat(hash.toString())
+            }
+
+            // Check if a card with this same name and type already exists
+            if FAHCards.cardMetadatas[_metadataId] != nil {
+                panic("A Card with this text and type already exists.")
+            }
+
+            self.metadataId = _metadataId
+            self.cardDeckId = _cardDeckId
             self.cardDeckAuthor = _cardDeckAuthor
             self.text = _text
 			self.type = _type
@@ -557,9 +579,16 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
         return &(self.cardDeckMetadatas[metadataId]! as  &CardDeckMetadata{CardDeckMetadataAdmin})
     }
 
-    pub fun createCardDeckMetadata(_name: String, _description: String, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile, _extra: {String: AnyStruct}): String {
-        let metadata = CardDeckMetadata(_name: _name, _description: _description, _image: _image, _thumbnail: _thumbnail, _extra: {})
+    access(account) fun createCardDeckMetadata(_name: String, _description: String, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile, _extra: {String: AnyStruct}): String {
+        let metadata = CardDeckMetadata(_name: _name, _description: _description, _image: _image, _thumbnail: _thumbnail, _extra: _extra)
         FAHCards.cardDeckMetadatas[metadata.metadataId] = metadata
+
+        return metadata.metadataId
+    }
+
+    access(account) fun createCardMetadata(_cardDeckId: String, _cardDeckAuthor: Address, _text: String, _type: CardType, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile, _maxSupply: UInt64, _extra: {String: AnyStruct}): String {
+        let metadata = CardMetadata(_cardDeckId: _cardDeckId, _cardDeckAuthor: _cardDeckAuthor, _text: _text, _type: _type, _image: _image, _thumbnail: _thumbnail, _maxSupply: _maxSupply, _extra: _extra)
+        FAHCards.cardMetadatas[metadata.metadataId] = metadata
 
         return metadata.metadataId
     }
