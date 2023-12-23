@@ -1,0 +1,62 @@
+version: "3.9"
+services:
+  coreDatabase:
+    image: "mysql:8.0.32"
+    ports:
+      - "3320:3306"
+    environment:
+      MYSQL_USER: FAHDev
+      MYSQL_PASSWORD: FAHDev
+      MYSQL_DATABASE: fahDev
+      MYSQL_RANDOM_ROOT_PASSWORD: true
+    healthcheck:
+      test:
+        - CMD
+        - mysqladmin
+        - ping
+        - "-h"
+        - localhost
+      timeout: 5s
+      retries: 10
+  eventsDatabase:
+    image: "mysql:8.0.32"
+    environment:
+      MYSQL_USER: FAHDev
+      MYSQL_PASSWORD: FAHDev
+      MYSQL_DATABASE: fahDevEvents
+      MYSQL_RANDOM_ROOT_PASSWORD: true
+    healthcheck:
+      test:
+        - CMD
+        - mysqladmin
+        - ping
+        - "-h"
+        - localhost
+      timeout: 5s
+      retries: 10
+  fahDev:
+    image: "forge4flow/forge4flow-core:0.0.3"
+    ports:
+      - "8200:8200"
+    depends_on:
+      coreDatabase:
+        condition: service_healthy
+    environment:
+      FORGE4FLOW_PORT: 8200
+      FORGE4FLOW_COREINSTALL: true
+      FORGE4FLOW_FLOWNETWORK: testnet
+      FORGE4FLOW_ADMINACCOUNT: "0x9ad610403a4a8bf6"
+      FORGE4FLOW_LOGLEVEL: 1
+      FORGE4FLOW_ENABLEACCESSLOG: true
+      FORGE4FLOW_AUTOMIGRATE: true
+      FORGE4FLOW_AUTHENTICATION_APIKEY: dev_api_key
+      FORGE4FLOW_AUTHENTICATION_AUTOREGISTER: true
+      FORGE4FLOW_DATASTORE_MYSQL_USERNAME: FAHDev
+      FORGE4FLOW_DATASTORE_MYSQL_PASSWORD: FAHDev
+      FORGE4FLOW_DATASTORE_MYSQL_HOSTNAME: coreDatabase
+      FORGE4FLOW_DATASTORE_MYSQL_DATABASE: fahDev
+      FORGE4FLOW_EVENTSTORE_SYNCHRONIZEEVENTS: true
+      FORGE4FLOW_EVENTSTORE_MYSQL_USERNAME: FAHDev
+      FORGE4FLOW_EVENTSTORE_MYSQL_PASSWORD: FAHDev
+      FORGE4FLOW_EVENTSTORE_MYSQL_HOSTNAME: eventsDatabase
+      FORGE4FLOW_EVENTSTORE_MYSQL_DATABASE: fahDevEvents
