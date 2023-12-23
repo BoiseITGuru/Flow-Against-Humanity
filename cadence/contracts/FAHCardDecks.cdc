@@ -3,7 +3,6 @@
 *  
 *
 */
-import Crypto
 import FungibleToken from "./utility/FungibleToken.cdc"
 import NonFungibleToken from "./utility/NonFungibleToken.cdc"
 import MetadataViews from "./utility/MetadataViews.cdc"
@@ -75,11 +74,11 @@ pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
         }
 
         pub fun resolveView(_ view: Type): AnyStruct? {
-            let metadata = FAHCards.cardDeckMetadatas[self.metadataId] ?? panic("couldn't find Card Set Metadata")
+            let metadata = FAHCards.cardDeckMetadatas[self.metadataId] ?? panic("couldn't find Card Deck Metadata")
             switch view {
                 case Type<MetadataViews.Display>():
 					return MetadataViews.Display(
-						name: "FAH Card Set: ".concat(metadata.name),
+						name: "FAH Card Deck: ".concat(metadata.name),
 						description: metadata.description,
 						thumbnail: metadata.thumbnail
 					)
@@ -107,7 +106,7 @@ pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
                     let royalties = [MetadataViews.Royalty(
                         receiver: authorVault,
                         cut: FAHRoyalties.authorCardDeck,
-                        description: authorName.concat(" receives a ").concat((FAHRoyalties.authorCardDeck * 100.0).toString()).concat("% royalty from secondary sales for authoring this FAH Card Set")
+                        description: authorName.concat(" receives a ").concat((FAHRoyalties.authorCardDeck * 100.0).toString()).concat("% royalty from secondary sales for authoring this FAH Card Deck")
                     )]
                     
                     for royalty in FAHRoyalties.globalCardDeck {
