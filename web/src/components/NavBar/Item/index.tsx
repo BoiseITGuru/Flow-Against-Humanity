@@ -10,12 +10,16 @@ import { useAppDispatch, useAppSelector } from '../../../stores/hooks'
 import { MenuNavBarItem } from '../../../interfaces'
 import { setDarkMode } from '../../../stores/darkModeSlice'
 
+// ** Hooks Import
+import { useForge4Flow } from '@forge4flow/forge4flow-nextjs'
+
 type Props = {
   item: MenuNavBarItem
 }
 
 export default function NavBarItem({ item }: Props) {
   const dispatch = useAppDispatch()
+  const auth = useForge4Flow()
 
   const userName = useAppSelector((state) => state.main.userName)
 
@@ -40,6 +44,10 @@ export default function NavBarItem({ item }: Props) {
     if (item.isToggleLightDark) {
       dispatch(setDarkMode(null))
     }
+  }
+
+  const handleDisconnect = () => {
+    auth.unauthenticate()
   }
 
   const NavBarItemComponentContents = (
@@ -89,6 +97,14 @@ export default function NavBarItem({ item }: Props) {
       <Link href={item.href} target={item.target} className={componentClass}>
         {NavBarItemComponentContents}
       </Link>
+    )
+  }
+
+  if (item.isLogout) {
+    return (
+      <div className={componentClass} onClick={handleDisconnect}>
+        {NavBarItemComponentContents}
+      </div>
     )
   }
 

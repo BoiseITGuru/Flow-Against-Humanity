@@ -6,6 +6,9 @@ import AsideMenuList from './List'
 import { MenuAsideItem } from '../../interfaces'
 import { useAppSelector } from '../../stores/hooks'
 
+// ** Hooks Import
+import { useForge4Flow } from '@forge4flow/forge4flow-nextjs'
+
 type Props = {
   menu: MenuAsideItem[]
   className?: string
@@ -14,6 +17,7 @@ type Props = {
 
 export default function AsideMenuLayer({ menu, className = '', ...props }: Props) {
   const darkMode = useAppSelector((state) => state.darkMode.isEnabled)
+  const auth = useForge4Flow()
 
   const logoutItem: MenuAsideItem = {
     label: 'Logout',
@@ -25,6 +29,10 @@ export default function AsideMenuLayer({ menu, className = '', ...props }: Props
   const handleAsideLgCloseClick = (e: React.MouseEvent) => {
     e.preventDefault()
     props.onAsideLgCloseClick()
+  }
+
+  const handleDisconnect = () => {
+    auth.unauthenticate()
   }
 
   return (
@@ -54,9 +62,11 @@ export default function AsideMenuLayer({ menu, className = '', ...props }: Props
         >
           <AsideMenuList menu={menu} />
         </div>
-        <ul>
-          <AsideMenuItem item={logoutItem} />
-        </ul>
+        {auth.isAuthenticated && ( // Render button only when user is authenticated
+          <ul onClick={handleDisconnect}>
+            <AsideMenuItem item={logoutItem} />
+          </ul>
+        )}
       </div>
     </aside>
   )

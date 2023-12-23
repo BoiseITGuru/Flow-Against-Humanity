@@ -23,6 +23,7 @@ export type MenuNavBarItem = {
   isDesktopNoLabel?: boolean
   isToggleLightDark?: boolean
   isCurrentUser?: boolean
+  requireSession?: boolean
   menu?: MenuNavBarItem[]
 }
 

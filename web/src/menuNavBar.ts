@@ -29,6 +29,7 @@ const menuNavBar: MenuNavBarItem[] = [
   },
   {
     isCurrentUser: true,
+    requireSession: true,
     menu: [
       {
         icon: mdiAccount,
