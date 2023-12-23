@@ -9,6 +9,7 @@
     "format": "prettier 'src/**/*.{tsx,ts,js}' --write"
   },
   "dependencies": {
+    "@forge4flow/forge4flow-nextjs": "github:forge4flow/forge4flow-nextjs",
     "@mdi/js": "^7.0.96",
     "@reduxjs/toolkit": "^1.9.5",
     "chart.js": "^4.4.0",
