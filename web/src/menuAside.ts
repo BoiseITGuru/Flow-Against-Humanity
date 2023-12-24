@@ -29,6 +29,7 @@ const menuAside: MenuAsideItem[] = [
     href: '/cards',
     label: 'My Cards',
     icon: mdiSquareEditOutline,
+    requireSession: true,
   },
   {
     href: '/decks',
@@ -39,6 +40,7 @@ const menuAside: MenuAsideItem[] = [
     href: '/create',
     label: 'Create Deck',
     icon: mdiResponsive,
+    requireSession: true,
   },
 ]
 
