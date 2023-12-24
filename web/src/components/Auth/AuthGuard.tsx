@@ -29,20 +29,9 @@ const AuthGuard = (props: AuthGuardProps) => {
         try {
           const validSession = await auth.validSession()
           if (!validSession) {
-            if (router.asPath !== '/') {
-              router.replace({
-                pathname: '/dashboard',
-                query: { returnUrl: router.asPath },
-              })
-            } else {
-              router.replace('/dashboard')
-            }
-          }
-
-          const isAdmin = await auth.hasFeature({ featureId: 'forge4flow-admin' })
-          if (!isAdmin) {
             router.replace('/401')
           }
+
           setCheckingSession(false)
         } catch (error) {
           console.log(error)

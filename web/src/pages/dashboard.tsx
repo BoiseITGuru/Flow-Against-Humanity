@@ -128,6 +128,7 @@ const DashboardPage = () => {
   )
 }
 
+DashboardPage.authGuard = false
 DashboardPage.getLayout = function getLayout(page: ReactElement) {
   return <LayoutAuthenticated>{page}</LayoutAuthenticated>
 }

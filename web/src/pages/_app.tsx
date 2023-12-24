@@ -8,15 +8,36 @@ import { store } from '../stores/store'
 import { Provider } from 'react-redux'
 import DarkMode from '../contexts/darkMode'
 import { Forge4FlowProvider } from '@forge4flow/forge4flow-nextjs'
+import AuthGuard from '../components/Auth/AuthGuard'
+import GuestGuard from '../components/Auth/GuestGuard'
+import Spinner from '../components/Spinner'
 import '../css/main.css'
 import '../flow/config.js'
 
 export type NextPageWithLayout<P = Record<string, unknown>, IP = P> = NextPage<P, IP> & {
+  authGuard: boolean
+  guestGuard: boolean
   getLayout?: (page: ReactElement) => ReactNode
 }
 
 type AppPropsWithLayout = AppProps & {
   Component: NextPageWithLayout
+}
+
+type GuardProps = {
+  authGuard: boolean
+  guestGuard: boolean
+  children: ReactNode
+}
+
+const Guard = ({ children, authGuard, guestGuard }: GuardProps) => {
+  if (guestGuard) {
+    return <GuestGuard fallback={<Spinner />}>{children}</GuestGuard>
+  } else if (!guestGuard && !authGuard) {
+    return <>{children}</>
+  } else {
+    return <AuthGuard fallback={<Spinner />}>{children}</AuthGuard>
+  }
 }
 
 function MyApp({ Component, pageProps }: AppPropsWithLayout) {
@@ -35,50 +56,55 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
 
   const imageHeight = '960'
 
+  const authGuard = Component.authGuard ?? true
+  const guestGuard = Component.guestGuard ?? false
+
   return (
     <Forge4FlowProvider endpoint={'http://localhost:8200'} clientKey="someKey">
       <Provider store={store}>
         {getLayout(
           <>
-            <DarkMode>
-              <Head>
-                <meta name="description" content={description} />
+            <Guard authGuard={authGuard} guestGuard={guestGuard}>
+              <DarkMode>
+                <Head>
+                  <meta name="description" content={description} />
 
-                <meta property="og:url" content={url} />
-                <meta property="og:site_name" content="JustBoil.me" />
-                <meta property="og:title" content={title} />
-                <meta property="og:description" content={description} />
-                <meta property="og:image" content={image} />
-                <meta property="og:image:type" content="image/png" />
-                <meta property="og:image:width" content={imageWidth} />
-                <meta property="og:image:height" content={imageHeight} />
+                  <meta property="og:url" content={url} />
+                  <meta property="og:site_name" content="JustBoil.me" />
+                  <meta property="og:title" content={title} />
+                  <meta property="og:description" content={description} />
+                  <meta property="og:image" content={image} />
+                  <meta property="og:image:type" content="image/png" />
+                  <meta property="og:image:width" content={imageWidth} />
+                  <meta property="og:image:height" content={imageHeight} />
 
-                <meta property="twitter:card" content="summary_large_image" />
-                <meta property="twitter:title" content={title} />
-                <meta property="twitter:description" content={description} />
-                <meta property="twitter:image:src" content={image} />
-                <meta property="twitter:image:width" content={imageWidth} />
-                <meta property="twitter:image:height" content={imageHeight} />
+                  <meta property="twitter:card" content="summary_large_image" />
+                  <meta property="twitter:title" content={title} />
+                  <meta property="twitter:description" content={description} />
+                  <meta property="twitter:image:src" content={image} />
+                  <meta property="twitter:image:width" content={imageWidth} />
+                  <meta property="twitter:image:height" content={imageHeight} />
 
-                <link rel="icon" href="/admin-one-react-tailwind/favicon.png" />
-              </Head>
+                  <link rel="icon" href="/admin-one-react-tailwind/favicon.png" />
+                </Head>
 
-              <Script
-                src="https://www.googletagmanager.com/gtag/js?id=UA-130795909-1"
-                strategy="afterInteractive"
-              />
+                <Script
+                  src="https://www.googletagmanager.com/gtag/js?id=UA-130795909-1"
+                  strategy="afterInteractive"
+                />
 
-              <Script id="google-analytics" strategy="afterInteractive">
-                {`
+                <Script id="google-analytics" strategy="afterInteractive">
+                  {`
                 window.dataLayer = window.dataLayer || [];
                 function gtag(){dataLayer.push(arguments);}
                 gtag('js', new Date());
                 gtag('config', 'UA-130795909-1');
               `}
-              </Script>
+                </Script>
 
-              <Component {...pageProps} />
-            </DarkMode>
+                <Component {...pageProps} />
+              </DarkMode>
+            </Guard>
           </>
         )}
       </Provider>
