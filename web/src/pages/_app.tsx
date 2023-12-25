@@ -56,7 +56,7 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
 
   const imageHeight = '960'
 
-  const authGuard = Component.authGuard ?? true
+  const authGuard = Component.authGuard ?? false
   const guestGuard = Component.guestGuard ?? false
 
   return (

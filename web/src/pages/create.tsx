@@ -146,6 +146,7 @@ const CreateDecksPage = () => {
   )
 }
 
+CreateDecksPage.authGuard = true
 CreateDecksPage.getLayout = function getLayout(page: ReactElement) {
   return <LayoutAuthenticated>{page}</LayoutAuthenticated>
 }
