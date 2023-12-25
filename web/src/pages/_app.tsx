@@ -44,12 +44,13 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
   // Use the layout defined at the page level, if available
   const getLayout = Component.getLayout || ((page) => page)
 
-  const title = `Admin One React Tailwind free`
+  const title = `Flow Against Humanity`
 
-  const description = 'Admin One - free React Next Tailwind dashboard with TypeScript and dark mode'
+  const description = 'FAH - A web3 card game for horrible people'
 
-  const url = 'https://justboil.github.io/admin-one-react-tailwind/'
+  const url = 'https://fah.boiseitguru.com'
 
+  //TODO: fix SEO image
   const image = `https://static.justboil.me/templates/one/repo-tailwind-react.png`
 
   const imageWidth = '1920'
@@ -78,14 +79,7 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
                   <meta property="og:image:width" content={imageWidth} />
                   <meta property="og:image:height" content={imageHeight} />
 
-                  <meta property="twitter:card" content="summary_large_image" />
-                  <meta property="twitter:title" content={title} />
-                  <meta property="twitter:description" content={description} />
-                  <meta property="twitter:image:src" content={image} />
-                  <meta property="twitter:image:width" content={imageWidth} />
-                  <meta property="twitter:image:height" content={imageHeight} />
-
-                  <link rel="icon" href="/admin-one-react-tailwind/favicon.png" />
+                  <link rel="icon" href="/favicon.png" />
                 </Head>
 
                 <Script
