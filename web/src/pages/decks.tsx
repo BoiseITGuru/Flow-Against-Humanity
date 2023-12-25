@@ -32,7 +32,7 @@ import { useAppDispatch } from '../stores/hooks'
 import { setDarkMode } from '../stores/darkModeSlice'
 import { getPageTitle } from '../config'
 
-const UiPage = () => {
+const DiscoverDecksPage = () => {
   const dispatch = useAppDispatch()
 
   const CardSamplesFooter = (
@@ -550,8 +550,8 @@ const UiPage = () => {
   )
 }
 
-UiPage.getLayout = function getLayout(page: ReactElement) {
+DiscoverDecksPage.getLayout = function getLayout(page: ReactElement) {
   return <LayoutAuthenticated>{page}</LayoutAuthenticated>
 }
 
-export default UiPage
+export default DiscoverDecksPage

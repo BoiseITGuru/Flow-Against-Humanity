@@ -16,7 +16,7 @@ import SectionTitle from '../components/Section/Title'
 import SectionTitleLineWithButton from '../components/Section/TitleLineWithButton'
 import { getPageTitle } from '../config'
 
-const FormsPage = () => {
+const CreateDecksPage = () => {
   return (
     <>
       <Head>
@@ -146,8 +146,8 @@ const FormsPage = () => {
   )
 }
 
-FormsPage.getLayout = function getLayout(page: ReactElement) {
+CreateDecksPage.getLayout = function getLayout(page: ReactElement) {
   return <LayoutAuthenticated>{page}</LayoutAuthenticated>
 }
 
-export default FormsPage
+export default CreateDecksPage

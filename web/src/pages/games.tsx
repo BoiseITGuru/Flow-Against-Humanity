@@ -11,7 +11,7 @@ import SectionTitleLineWithButton from '../components/Section/TitleLineWithButto
 import TableSampleClients from '../components/Table/SampleClients'
 import { getPageTitle } from '../config'
 
-const TablesPage = () => {
+const DiscoverGamesPage = () => {
   return (
     <>
       <Head>
@@ -52,8 +52,8 @@ const TablesPage = () => {
   )
 }
 
-TablesPage.getLayout = function getLayout(page: ReactElement) {
+DiscoverGamesPage.getLayout = function getLayout(page: ReactElement) {
   return <LayoutAuthenticated>{page}</LayoutAuthenticated>
 }
 
-export default TablesPage
+export default DiscoverGamesPage

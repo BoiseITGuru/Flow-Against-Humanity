@@ -6,7 +6,7 @@ import SectionMain from '../components/Section/Main'
 import SectionTitle from '../components/Section/Title'
 import { appTitle, getPageTitle } from '../config'
 
-const ResponsivePage = () => {
+const MyCardsPage = () => {
   return (
     <>
       <Head>
@@ -70,8 +70,9 @@ const ResponsivePage = () => {
   )
 }
 
-ResponsivePage.getLayout = function getLayout(page: ReactElement) {
+MyCardsPage.authGuard = true
+MyCardsPage.getLayout = function getLayout(page: ReactElement) {
   return <LayoutAuthenticated>{page}</LayoutAuthenticated>
 }
 
-export default ResponsivePage
+export default MyCardsPage

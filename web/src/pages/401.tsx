@@ -7,7 +7,7 @@ import SectionFullScreen from '../components/Section/FullScreen'
 import LayoutGuest from '../layouts/Guest'
 import { getPageTitle } from '../config'
 
-const ErrorPage = () => {
+const UnauthorizedPage = () => {
   return (
     <>
       <Head>
@@ -30,9 +30,9 @@ const ErrorPage = () => {
   )
 }
 
-ErrorPage.authGuard = false
-ErrorPage.getLayout = function getLayout(page: ReactElement) {
+UnauthorizedPage.authGuard = false
+UnauthorizedPage.getLayout = function getLayout(page: ReactElement) {
   return <LayoutGuest>{page}</LayoutGuest>
 }
 
-export default ErrorPage
+export default UnauthorizedPage
