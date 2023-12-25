@@ -20,10 +20,6 @@ export default function NavBarMenuList({ menu }: Props) {
 
   const handleLogin = async () => {
     const login = await auth.authenticate()
-
-    if (login) {
-      router.push('/dashboard')
-    }
   }
 
   return (

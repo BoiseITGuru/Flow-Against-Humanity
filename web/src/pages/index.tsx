@@ -8,7 +8,7 @@ const Home = () => {
 
   useEffect(() => {
     if (router.route === '/') {
-      router.push('/dashboard')
+      router.push('/christmas23')
     }
   }, [router])
 
@@ -22,5 +22,6 @@ const Home = () => {
 Home.getLayout = function getLayout(page: ReactElement) {
   return <LayoutGuest>{page}</LayoutGuest>
 }
+
 Home.guestGuard = true
 export default Home
