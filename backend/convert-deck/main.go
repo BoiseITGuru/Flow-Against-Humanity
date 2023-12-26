@@ -20,13 +20,15 @@ type Deck struct {
 }
 
 type DeckResponse struct {
-	Name      string        `json:"name"`
-	Calls     []interface{} `json:"calls"`
-	Public    bool          `json:"public"`
-	Language  string        `json:"language"`
-	Responses []string      `json:"responses"`
-	Author    Author        `json:"author"`
-	Version   int           `json:"version"`
+	Name           string   `json:"name"`
+	Questions      []string `json:"questions"`
+	TotalQuestions int      `json:"totalQuestions"`
+	Published      bool     `json:"published"`
+	Language       string   `json:"language"`
+	Answers        []string `json:"answers"`
+	TotalAnswers   int      `json:"totalAnswers"`
+	Author         string   `json:"author"`
+	Version        int      `json:"version"`
 }
 
 type Author struct {
@@ -60,25 +62,24 @@ func main() {
 	}
 
 	// Process each nested array in the 'calls' field and replace with modified strings
-	var modifiedCalls []interface{}
+	var fahQuestions []string
 	for _, nestedArray := range deck.Calls {
 		for _, array := range nestedArray {
-			// Convert the array to a single string
-			resultString := convertArrayToString(array)
-
 			// Append the modified string to the new array
-			modifiedCalls = append(modifiedCalls, resultString)
+			fahQuestions = append(fahQuestions, convertArrayToString(array))
 		}
 	}
 
 	response := DeckResponse{
-		Name:      deck.Name,
-		Calls:     modifiedCalls,
-		Public:    deck.Public,
-		Language:  deck.Language,
-		Responses: deck.Responses,
-		Author:    deck.Author,
-		Version:   deck.Version,
+		Name:           deck.Name,
+		Questions:      fahQuestions,
+		TotalQuestions: len(fahQuestions),
+		Published:      deck.Public,
+		Language:       deck.Language,
+		Answers:        deck.Responses,
+		TotalAnswers:   len(deck.Responses),
+		Author:         "0x76d988a29af9ea8d",
+		Version:        deck.Version,
 	}
 
 	// Write the modified structure to the output file
