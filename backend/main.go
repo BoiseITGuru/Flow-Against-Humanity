@@ -27,7 +27,7 @@ func initRouter() *gin.Engine {
 
 	convert := router.Group("/convert")
 	{
-		convert.POST("/", convertDeck.ConvertDeck)
+		convert.POST("/:deckSource", convertDeck.ConvertDeck)
 	}
 
 	return router
