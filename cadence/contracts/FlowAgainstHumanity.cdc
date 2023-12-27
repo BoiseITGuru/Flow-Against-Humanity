@@ -4,23 +4,35 @@
     Flow Against Humanity is a multi-player NFT card game protocol inspired by games like Apples 
     to Apples and Cards Against Humanity.
 
+    This contract is governed by the Flow Against Humanity DAO at https://toucans.ecdao.org/p/FAHCoin
+
     Protocol Design:
 
         Cards - Cards are defined by a CardMetadata struct and stored centrally in the protocol 
-        contract to all for easy moderation. A separate FAHCard contract is used to define the
+        contract to all for easy moderation. A separate FAHCards contract is used to define the
         actual NFTs minted for each card.
 
-        Card Decks - Card Decks are defined by a CardDeckMetadata struct and stored centrally 
-        in the protocol contract to all for easy moderation. A separate FAHCard contract is 
-        used to define the actual NFTs minted for each card.
+        Card Decks - Card Decks are defined by a CardDeckMetadata struct and stored centrally in
+        the protocol contract to all for easy moderation. A separate FAHCardDecks contract is 
+        used to define the actual NFTs minted for each deck allowing royalty and authorship
+        rights to the deck to be resold.
 
         Games - To Be Defined!
 
-    Creative Commons Notice:
+        Moderator Resource - the Moderator resource inside this contract is a multi-sig/voting 
+        contract used to moderate the platform, including editing, disabling, or entirely removing 
+        CardMetadata, and CardDeckMetadata structs from the protocol to ensure complicance with 
+        published rules and/or Legal requests.
+
+        Admin Resource - The admin resrouce inside the contract is a multi-sig/voting contract
+        for controlling the proctocals settings and minting Moderator resources.
+
+    Cards Against Humanity & Creative Commons Notice:
 
         Cards Against Humanity decks publsihed to the protocal must adhear to the 
         Creative Commons BY-NC-SA 2.0 license (https://creativecommons.org/licenses/by-nc-sa/2.0/)
-        and properly tagged as a CAHDeck by setting the _cahDeck boolean to true upon init.
+        they were orginally published under. Deck authors must also properly tag the deck as a 
+        CAHDeck by setting the _cahDeck boolean to true upon init.
         
         Protocal users are hereby notified the "non-commercial" aspect of that license implies 
         that decks and cards under those terms cannot be sold. CC’s NonCommercial (NC) licenses 
