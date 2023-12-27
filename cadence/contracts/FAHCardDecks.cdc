@@ -8,7 +8,6 @@ import NonFungibleToken from "./utility/NonFungibleToken.cdc"
 import MetadataViews from "./utility/MetadataViews.cdc"
 import ViewResolver from "./utility/ViewResolver.cdc"
 import FlowAgainstHumanity from "./FlowAgainstHumanity.cdc"
-import FAHRoyalties from "./FAHRoyalties.cdc"
 import Profile from "./find/Profile.cdc"
 
 pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
@@ -98,11 +97,11 @@ pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
 
                     let royalties = [MetadataViews.Royalty(
                         receiver: authorVault,
-                        cut: FAHRoyalties.authorCardDeck,
-                        description: authorName.concat(" receives a ").concat((FAHRoyalties.authorCardDeck * 100.0).toString()).concat("% royalty from secondary sales for authoring this FAH Card Deck")
+                        cut: FlowAgainstHumanity.authorCardDeckRoyalties,
+                        description: authorName.concat(" receives a ").concat((FlowAgainstHumanity.authorCardDeckRoyalties * 100.0).toString()).concat("% royalty from secondary sales for authoring this FAH Card Deck")
                     )]
                     
-                    for royalty in FAHRoyalties.globalCardDeck {
+                    for royalty in FlowAgainstHumanity.globalCardDeckRoyalties {
                         royalties.append(royalty)
                     }
                 case Type<MetadataViews.Serial>():

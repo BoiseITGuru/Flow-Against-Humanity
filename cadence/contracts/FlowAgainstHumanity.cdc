@@ -48,11 +48,11 @@ import MetadataViews from "./utility/MetadataViews.cdc"
 
 pub contract FlowAgainstHumanity {
     /* 
-    ################################
-    ||                            ||
-    ||        FAH - Cards         ||
-    ||                            ||
-    ################################
+        ################################
+        ||                            ||
+        ||        FAH - Cards         ||
+        ||                            ||
+        ################################
     */
 
     // Map of card metadataIds to the corresponding CardMetadata struct
@@ -191,12 +191,13 @@ pub contract FlowAgainstHumanity {
 
 
 
+
     /*
-    ################################
-    ||                            ||
-    ||      FAH - Card Decks      ||
-    ||                            ||
-    ################################
+        ################################
+        ||                            ||
+        ||      FAH - Card Decks      ||
+        ||                            ||
+        ################################
     */
 
     // Map of card deck metadataIds to the corresponding CardDeckMetadata struct
@@ -205,8 +206,8 @@ pub contract FlowAgainstHumanity {
     access(self) let orginalCardDeckOwner: {Address: {UInt64: [UInt64]}}
     // Maps the owner of a CardDeck to the hash of CardDeckMetadatas name then
     // to each individual CardDeckMetadatas struct.
-    access(account) let cardDeckOwners: {Address: [String]}
-	access(account) let cardDecks: {String: Address}
+    access(self) let cardDeckOwners: {Address: [String]}
+	access(self) let cardDecks: {String: Address}
 
     // Public CardDeckMetaData Interface
     pub struct interface CardDeckMetadataPublic {
@@ -364,13 +365,45 @@ pub contract FlowAgainstHumanity {
         return metadata.metadataId
     }
 
+
+
+
+
+    /*
+        ################################
+        ||                            ||
+        ||      FAH - Royalties       ||
+        ||                            ||
+        ################################
+    */
+    pub var globalCardRoyalties: [MetadataViews.Royalty]
+    pub var globalCardDeckRoyalties: [MetadataViews.Royalty]
+    pub var authorCardRoyalties: UFix64
+    pub var authorCardDeckRoyalties: UFix64
+
+    access(contract) fun updateGlobalCard(_ _royalties:[MetadataViews.Royalty]) {
+        self.globalCardRoyalties = _royalties
+    }
+
+    access(contract) fun updateGlobalGlobalCardDeck(_ _royalties:[MetadataViews.Royalty]) {
+        self.globalCardDeckRoyalties = _royalties
+    }
+
     init() {
-        // Set empty dicts/arrays
+        // FAH - Cards
         self.cardMetadatas = {}
-        self.cardDeckMetadatas = {}
         self.orginalCardOwner = {}
+
+        // FAH - Card Decks
+        self.cardDeckMetadatas = {}
         self.orginalCardDeckOwner = {}
         self.cardDeckOwners = {}
         self.cardDecks = {}
+
+        // FAH - Royalties
+        self.globalCardRoyalties = []
+        self.globalCardDeckRoyalties = []
+        self.authorCardRoyalties = 2.5
+        self.authorCardDeckRoyalties = 2.5
     }
 }

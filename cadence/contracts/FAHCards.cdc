@@ -8,7 +8,6 @@ import NonFungibleToken from "./utility/NonFungibleToken.cdc"
 import MetadataViews from "./utility/MetadataViews.cdc"
 import ViewResolver from "./utility/ViewResolver.cdc"
 import FlowAgainstHumanity from "./FlowAgainstHumanity.cdc"
-import FAHRoyalties from "./FAHRoyalties.cdc"
 import Profile from "./find/Profile.cdc"
 
 pub contract FAHCards: NonFungibleToken, ViewResolver {
@@ -126,11 +125,11 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
 
                     royalties.append(MetadataViews.Royalty(
                         receiver: authorVault,
-                        cut: FAHRoyalties.authorCardDeck,
-                        description: authorName.concat(" receives a ").concat((FAHRoyalties.authorCardDeck * 100.0).toString()).concat("% royalty from secondary sales for authoring this FAH Card Set")
+                        cut: FlowAgainstHumanity.authorCardDeckRoyalties,
+                        description: authorName.concat(" receives a ").concat((FlowAgainstHumanity.authorCardDeckRoyalties * 100.0).toString()).concat("% royalty from secondary sales for authoring this FAH Card Set")
                     ))
 
-                    for royalty in FAHRoyalties.globalCard {
+                    for royalty in FlowAgainstHumanity.globalCardRoyalties {
                         royalties.append(royalty)
                     }
 
