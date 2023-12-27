@@ -26,7 +26,6 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
     // Storage and Public Paths
     pub let CollectionStoragePath: StoragePath
     pub let CollectionPublicPath: PublicPath
-    pub let MinterStoragePath: StoragePath
 
     // The core resource that represents a Non Fungible Token.
     // New instances will be created using the NFTMinter resource
@@ -371,7 +370,6 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
         // Set the named paths
         self.CollectionStoragePath = /storage/FAHCardsCollection
         self.CollectionPublicPath = /public/FAHCardsCollection
-        self.MinterStoragePath = /storage/FAHCardsMinter
 
         // Create a Collection resource and save it to storage
         let collection <- create Collection()

@@ -27,6 +27,9 @@
         Admin Resource - The admin resrouce inside the contract is a multi-sig/voting contract
         for controlling the proctocals settings and minting Moderator resources.
 
+        Backend Resource - The backend resrouce is a collection of functions to be used by the web2
+        REST API that manages the web and mobile applications.
+
     Cards Against Humanity & Creative Commons Notice:
 
         Cards Against Humanity decks publsihed to the protocal must adhear to the 
