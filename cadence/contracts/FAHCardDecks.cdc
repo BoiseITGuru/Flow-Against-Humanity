@@ -29,11 +29,6 @@ pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
     pub let CollectionPublicPath: PublicPath
     pub let CollectionPrivatePath: PrivatePath
 
-    // Maps the owner of a CardDeck to the hash of CardDeckMetadatas name then
-    // to each individual CardDeckMetadatas struct.
-    access(account) let cardDeckOwners: {Address: [String]}
-	access(account) let cardDecks: {String: Address}
-
     // Metadata struct for defining CardDecks
     pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
         pub let id: UInt64
@@ -202,11 +197,11 @@ pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
             self.ownedNFTs[cardDeck.uuid] <-! cardDeck
 
             // Map author to CardDeck
-            FAHCardDecks.cardDecks[metadataId] = author
-            if let cardDecks = &FAHCardDecks.cardDeckOwners[author] as &[String]? {
+            FlowAgainstHumanity.cardDecks[metadataId] = author
+            if let cardDecks = &FlowAgainstHumanity.cardDeckOwners[author] as &[String]? {
                 cardDecks.append(metadataId)
             } else {
-                FAHCardDecks.cardDeckOwners[author] = [metadataId]
+                FlowAgainstHumanity.cardDeckOwners[author] = [metadataId]
             }
         }
 
@@ -266,10 +261,6 @@ pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
 
     init() {
         self.totalSupply = 0
-
-        // Set empty dicts/arrays
-        self.cardDeckOwners = {}
-        self.cardDecks = {}
 
         // Set the named paths
         self.CollectionStoragePath = /storage/FAHCardDeckCollection

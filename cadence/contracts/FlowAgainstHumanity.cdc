@@ -191,6 +191,10 @@ pub contract FlowAgainstHumanity {
     access(self) let cardDeckMetadatas: {String: CardDeckMetadata}
     // Map of the oringal owners/minters of a FAHCard
     access(self) let orginalCardDeckOwner: {Address: {UInt64: [UInt64]}}
+    // Maps the owner of a CardDeck to the hash of CardDeckMetadatas name then
+    // to each individual CardDeckMetadatas struct.
+    access(account) let cardDeckOwners: {Address: [String]}
+	access(account) let cardDecks: {String: Address}
 
     // Public CardDeckMetaData Interface
     pub struct interface CardDeckMetadataPublic {
@@ -354,5 +358,7 @@ pub contract FlowAgainstHumanity {
         self.cardDeckMetadatas = {}
         self.orginalCardOwner = {}
         self.orginalCardDeckOwner = {}
+        self.cardDeckOwners = {}
+        self.cardDecks = {}
     }
 }
