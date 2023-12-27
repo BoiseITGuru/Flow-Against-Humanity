@@ -52,6 +52,9 @@ func ConvertDeck(context *gin.Context) {
 	}
 
 	fmt.Println(deck)
+
+	// TODO: Send Deck To Queue For Proccessing
+
 }
 
 func convertManyDecks(context *gin.Context) (*ConvertedDeck, error) {
@@ -78,7 +81,7 @@ func convertManyDecks(context *gin.Context) (*ConvertedDeck, error) {
 		Language:       deck.Language,
 		Answers:        deck.Responses,
 		TotalAnswers:   len(deck.Responses),
-		Author:         "0x76d988a29af9ea8d",
+		Author:         "0x76d988a29af9ea8d", //TODO: DO NOT HARDCODE THIS
 		Version:        deck.Version,
 	}, nil
 }
