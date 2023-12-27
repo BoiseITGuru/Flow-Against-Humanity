@@ -7,7 +7,7 @@ import FungibleToken from "./utility/FungibleToken.cdc"
 import NonFungibleToken from "./utility/NonFungibleToken.cdc"
 import MetadataViews from "./utility/MetadataViews.cdc"
 import ViewResolver from "./utility/ViewResolver.cdc"
-import FAHCards from "./FAHCards.cdc"
+import FlowAgainstHumanity from "./FlowAgainstHumanity.cdc"
 import FAHRoyalties from "./FAHRoyalties.cdc"
 import Profile from "./find/Profile.cdc"
 
@@ -39,15 +39,13 @@ pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
         pub let id: UInt64
         pub let metadataId: String
 
-        pub fun getMetadata(): &FAHCards.CardDeckMetadata{FAHCards.CardDeckMetadataPublic}? {
-			return FAHCards.getCardDeckMetadata(self.metadataId)
+        pub fun getMetadata(): &FlowAgainstHumanity.CardDeckMetadata{FlowAgainstHumanity.CardDeckMetadataPublic}? {
+			return FlowAgainstHumanity.getCardDeckMetadata(self.metadataId)
 		}
 
-        pub fun createCardMetadata(_text: String, _type: FAHCards.CardType, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile, _maxSupply: UInt64) {
-            let setMetadata = FAHCards.getCardDeckMetadataAdmin(self.metadataId) ?? panic("Could not get Card Deck Metadata")
-            let cardMetadataId = FAHCards.createCardMetadata(_cardDeckId: self.metadataId, _cardDeckAuthor: self.owner!.address, _text: _text, _type: _type, _image: _image, _thumbnail: _thumbnail, _maxSupply: _maxSupply, _extra: {})
-            setMetadata.appendCardMetadataId(cardMetadataId)
-            setMetadata.incrementMaxSupply(cardMetadataId)
+        pub fun createCardMetadata(_text: String, _type: FlowAgainstHumanity.CardType, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile, _maxSupply: UInt64) {
+            let metadataAdmin = FAHCardDecks.getCardDeckMetadataAdmin(self.metadataId) ?? panic("Card Deck Admin Not Found")
+            metadataAdmin.createCardMetadata(_cardAuthor: self.owner!.address, _text: _text, _type: _type, _image: _image, _thumbnail: _thumbnail, _maxSupply: _maxSupply, _extra: {})
         }
 
         // mintCard mints a new FAHCard NFT and depsits
@@ -74,7 +72,7 @@ pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
         }
 
         pub fun resolveView(_ view: Type): AnyStruct? {
-            let metadata = FAHCards.cardDeckMetadatas[self.metadataId] ?? panic("couldn't find Card Deck Metadata")
+            let metadata = FlowAgainstHumanity.cardDeckMetadatas[self.metadataId] ?? panic("couldn't find Card Deck Metadata")
             switch view {
                 case Type<MetadataViews.Display>():
 					return MetadataViews.Display(
@@ -149,7 +147,7 @@ pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
         pub fun borrowCardDeck(metadataId: String): &FAHCardDecks.NFT? {
             post {
                 (result == nil) || (result?.metadataId == metadataId):
-                    "Cannot borrow FAHCards reference: the ID of the returned reference is incorrect"
+                    "Cannot borrow FlowAgainstHumanity reference: the ID of the returned reference is incorrect"
             }
         }
     }
@@ -197,7 +195,7 @@ pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
         pub fun createEmptyCardDeck(_name: String, _description: String, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile) {
             let author = self.owner!.address
             
-            let metadataId = FAHCards.createCardDeckMetadata(_name: _name, _description: _description, _image: _image, _thumbnail: _thumbnail, _extra: {})
+            let metadataId = FlowAgainstHumanity.createCardDeckMetadata(_name: _name, _description: _description, _image: _image, _thumbnail: _thumbnail, _extra: {})
 
             let cardDeck <- create NFT(_metadataId: metadataId)
             self.authoredSets[metadataId] = cardDeck.uuid
@@ -228,6 +226,22 @@ pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
     //
     pub fun createEmptyCollection(): @Collection {
         return <- create Collection()
+    }
+
+    pub fun getCardDeckMetadata(_ metadataId: String): &FlowAgainstHumanity.CardDeckMetadata{FlowAgainstHumanity.CardDeckMetadataPublic}? {
+		return FlowAgainstHumanity.getCardDeckMetadata(metadataId)
+	}
+
+    // Private function for creating FAHCard Metadata
+    //
+    // @return a FlowAgainstHumanity.CardDeckMetadataAdmin interface
+    //
+    access(self) fun getCardDeckMetadataAdmin(_ metadataId: String): &FlowAgainstHumanity.CardDeckMetadata{FlowAgainstHumanity.CardDeckMetadataAdmin}? {
+        return FlowAgainstHumanity.getCardDeckMetadataAdmin(metadataId)
+    }
+
+    access(self) fun createCardDeckMetadata(_name: String, _description: String, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile, _extra: {String: AnyStruct}): String {
+        return FlowAgainstHumanity.createCardDeckMetadata(_name: _name, _description: _description, _image: _image, _thumbnail: _thumbnail, _extra: _extra)
     }
 
     // TODO: Implement getViews()
