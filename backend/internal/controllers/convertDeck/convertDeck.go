@@ -1,12 +1,13 @@
-package main
+package convertDeck
 
 import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Deck struct {
@@ -36,7 +37,7 @@ type Author struct {
 	Name string `json:"name"`
 }
 
-func main() {
+func ConvertDeck(context *gin.Context) {
 	// Define command line flags
 	filePath := flag.String("file", "", "Path to the input JSON file")
 	outputPath := flag.String("output", "output.txt", "Path to the output file")
@@ -49,7 +50,7 @@ func main() {
 	}
 
 	// Read the JSON file
-	jsonData, err := ioutil.ReadFile(*filePath)
+	jsonData, err := os.ReadFile(*filePath)
 	if err != nil {
 		log.Fatalf("Error reading JSON file: %v", err)
 	}
