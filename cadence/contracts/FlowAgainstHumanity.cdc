@@ -1,16 +1,47 @@
 /*
-*
-*  
-*
+    Flow Against Humanity (FAH)
+
+    Flow Against Humanity is a a multi-player NFT card game protocol
+    inspired by games like Apples to Apple and Cards Against Humanity.
+
+    Protocol Design:
+
+        Cards - Cards are defined by a CardMetadata struct and stored centrally in the protocol 
+        contract to all for easy moderation. A separate FAHCard contract is used to define the
+        actual NFTs minted for each card.
+
+        Card Decks - Card Decks are defined by a CardDeckMetadata struct and stored centrally 
+        in the protocol contract to all for easy moderation. A separate FAHCard contract is 
+        used to define the actual NFTs minted for each card.
+
+        Games - To Be Defined!
+
+    Creative Commons Notice:
+
+        Cards Against Humanity decks publsihed to the protocal must adhear to the 
+        Creative Commons BY-NC-SA 2.0 license (https://creativecommons.org/licenses/by-nc-sa/2.0/)
+        and properly tagged as a CAHDeck by setting the _cahDeck boolean to true upon init.
+        
+        Protocal users are hereby notified the "non-commercial" aspect of that license implies 
+        that decks and cards under those terms cannot be sold. CC’s NonCommercial (NC) licenses 
+        prohibit uses that are “primarily intended for or directed toward commercial advantage or 
+        monetary compensation.”
+
+        Violations can be reported by opening a Github issue at 
+        https://github.com/BoiseITGuru/Flow-Against-Humanity.
+
+        
 */
 import MetadataViews from "./utility/MetadataViews.cdc"
 
 pub contract FlowAgainstHumanity {
-    // ################################
-    // ||                            ||
-    // ||        FAH - Cards         ||
-    // ||                            ||
-    // ################################
+    /* 
+    ################################
+    ||                            ||
+    ||        FAH - Cards         ||
+    ||                            ||
+    ################################
+    */
 
     // Map of card metadataIds to the corresponding CardMetadata struct
     access(self) let cardMetadatas: {String: CardMetadata}
@@ -148,11 +179,13 @@ pub contract FlowAgainstHumanity {
 
 
 
-    // ################################
-    // ||                            ||
-    // ||      FAH - Card Decks      ||
-    // ||                            ||
-    // ################################
+    /*
+    ################################
+    ||                            ||
+    ||      FAH - Card Decks      ||
+    ||                            ||
+    ################################
+    */
 
     // Map of card deck metadataIds to the corresponding CardDeckMetadata struct
     access(self) let cardDeckMetadatas: {String: CardDeckMetadata}
