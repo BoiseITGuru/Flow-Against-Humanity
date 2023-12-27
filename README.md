@@ -36,7 +36,8 @@
   <p align="center">
     <a href="https://fah.boiseitguru.com"><strong>Play Now!</strong></a>
     <br />
-    based on the epic card game "Cards Against Humanity"
+    A multi-player NFT card game protocol inspired by games like Apples 
+    to Apples and Cards Against Humanity.
     <br />
     <br />
     <a href="https://github.com/BoiseITGuru/Flow-Against-Humanity">Explore the docs</a>

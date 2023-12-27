@@ -1,8 +1,8 @@
 /*
     Flow Against Humanity (FAH)
 
-    Flow Against Humanity is a a multi-player NFT card game protocol
-    inspired by games like Apples to Apple and Cards Against Humanity.
+    Flow Against Humanity is a multi-player NFT card game protocol inspired by games like Apples 
+    to Apples and Cards Against Humanity.
 
     Protocol Design:
 
