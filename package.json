@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm:startDev-*\"",
+    "startDev-web": "cd web && npm run dev",
+    "startDev-backend": "cd backend && go run ."
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
