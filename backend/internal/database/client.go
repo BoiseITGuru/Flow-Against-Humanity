@@ -1,16 +1,15 @@
 package database
 
 import (
-	"log"
-
 	"backend/internal/models"
+	"log"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
 func Connect() (*gorm.DB, error) {
-	instance, err := gorm.Open(sqlite.Open("Forge4FlowManager.db"), &gorm.Config{})
+	instance, err := gorm.Open(sqlite.Open("fah.db"), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}
@@ -18,7 +17,8 @@ func Connect() (*gorm.DB, error) {
 	log.Println("Connected to Database!")
 
 	instance.AutoMigrate(
-		&models.CoreInstance{},
+		models.CardDeck{},
+		models.Card{},
 	)
 
 	log.Println("Database Migration Completed!")

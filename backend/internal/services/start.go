@@ -13,7 +13,7 @@ var DB *gorm.DB
 var Queues *queue.JobQueues
 
 func Start() {
-	startQueues()
+	StartDB()
 }
 
 func StartDB() {
