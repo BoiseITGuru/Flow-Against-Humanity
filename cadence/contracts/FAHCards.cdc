@@ -3,12 +3,12 @@
 *  
 *
 */
-import FungibleToken from "./utility/FungibleToken.cdc"
-import NonFungibleToken from "./utility/NonFungibleToken.cdc"
-import MetadataViews from "./utility/MetadataViews.cdc"
-import ViewResolver from "./utility/ViewResolver.cdc"
-import FlowAgainstHumanity from "./FlowAgainstHumanity.cdc"
-import Profile from "./find/Profile.cdc"
+import "FungibleToken"
+import "NonFungibleToken"
+import "MetadataViews"
+import "ViewResolver"
+import "FlowAgainstHumanity"
+import "Profile"
 
 pub contract FAHCards: NonFungibleToken, ViewResolver {
 	// Total supply of FAHCards in existence
@@ -307,7 +307,7 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
 	}
 
     // Get Admin interface to CardMetadata
-    access(self) fun getCardMetadataAdmin(_ metadataId: String): &FlowAgainstHumanity.CardMetadata{FlowAgainstHumanity.CardMetadataAdmin}? {
+    access(contract) fun getCardMetadataAdmin(_ metadataId: String): &FlowAgainstHumanity.CardMetadata{FlowAgainstHumanity.CardMetadataAdmin}? {
         return FlowAgainstHumanity.getCardMetadataAdmin(metadataId)
     }
 
@@ -370,10 +370,6 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
         // Set the named paths
         self.CollectionStoragePath = /storage/FAHCardsCollection
         self.CollectionPublicPath = /public/FAHCardsCollection
-
-        // Create a Collection resource and save it to storage
-        let collection <- create Collection()
-        self.account.save(<-collection, to: self.CollectionStoragePath)
 
         // create a public capability for the collection
         self.account.link<&FAHCards.Collection{NonFungibleToken.CollectionPublic, FAHCards.FAHCardsCollectionPublic, MetadataViews.ResolverCollection}>(

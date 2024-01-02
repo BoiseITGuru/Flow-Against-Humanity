@@ -3,12 +3,12 @@
 *  
 *
 */
-import FungibleToken from "./utility/FungibleToken.cdc"
-import NonFungibleToken from "./utility/NonFungibleToken.cdc"
-import MetadataViews from "./utility/MetadataViews.cdc"
-import ViewResolver from "./utility/ViewResolver.cdc"
-import FlowAgainstHumanity from "./FlowAgainstHumanity.cdc"
-import Profile from "./find/Profile.cdc"
+import "FungibleToken"
+import "NonFungibleToken"
+import "MetadataViews"
+import "ViewResolver"
+import "FlowAgainstHumanity"
+import "Profile"
 
 pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
     // Total supply of FAHCardDecks in existence
@@ -66,13 +66,13 @@ pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
         }
 
         pub fun resolveView(_ view: Type): AnyStruct? {
-            let metadata = FlowAgainstHumanity.cardDeckMetadatas[self.metadataId] ?? panic("couldn't find Card Deck Metadata")
+            let metadata = self.getMetadata() ?? panic("couldn't find Card Deck Metadata")
             switch view {
                 case Type<MetadataViews.Display>():
 					return MetadataViews.Display(
-						name: "FAH Card Deck: ".concat(metadata.name),
-						description: metadata.description,
-						thumbnail: metadata.thumbnail
+						name: "FAH Card Deck: ".concat(metadata.getName()),
+						description: metadata.getDescription(),
+						thumbnail: metadata.getThumbnail()
 					)
                 case Type<MetadataViews.ExternalURL>():
                     return MetadataViews.ExternalURL("https://fah.boiseitguru.dev/sets/".concat(self.metadataId))
@@ -110,10 +110,10 @@ pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
                     )
                 case Type<MetadataViews.Traits>():
 					let traits = MetadataViews.Traits([
-                        MetadataViews.Trait(name: "Number Questions", value: metadata.questionCards.length, displayType: nil, rarity: nil),
-                        MetadataViews.Trait(name: "Number Responses", value: metadata.responseCards.length, displayType: nil, rarity: nil),
-                        MetadataViews.Trait(name: "Max Supply", value: metadata.maxSupply, displayType: nil, rarity: nil),
-                        MetadataViews.Trait(name: "In Circulation", value: metadata.inCirculation, displayType: nil, rarity: nil)
+                        MetadataViews.Trait(name: "Number Questions", value: metadata.getQuestionCards().length, displayType: nil, rarity: nil),
+                        MetadataViews.Trait(name: "Number Responses", value: metadata.getResponseCards().length, displayType: nil, rarity: nil),
+                        MetadataViews.Trait(name: "Max Supply", value: metadata.getMaxSupply(), displayType: nil, rarity: nil),
+                        MetadataViews.Trait(name: "In Circulation", value: metadata.getInCiculation(), displayType: nil, rarity: nil)
                     ])
                 case Type<MetadataViews.NFTView>():
 					return MetadataViews.NFTView(
@@ -187,21 +187,13 @@ pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
         }
 
         pub fun createEmptyCardDeck(_name: String, _description: String, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile) {
-            let author = self.owner!.address
-            
             let metadataId = FlowAgainstHumanity.createCardDeckMetadata(_name: _name, _description: _description, _image: _image, _thumbnail: _thumbnail, _extra: {})
 
             let cardDeck <- create NFT(_metadataId: metadataId)
             self.authoredSets[metadataId] = cardDeck.uuid
             self.ownedNFTs[cardDeck.uuid] <-! cardDeck
 
-            // Map author to CardDeck
-            FlowAgainstHumanity.cardDecks[metadataId] = author
-            if let cardDecks = &FlowAgainstHumanity.cardDeckOwners[author] as &[String]? {
-                cardDecks.append(metadataId)
-            } else {
-                FlowAgainstHumanity.cardDeckOwners[author] = [metadataId]
-            }
+            FAHCardDecks.mapAuthorToCardDeck(author: self.owner!.address, metadataId: metadataId)
         }
 
         init () {
@@ -230,12 +222,16 @@ pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
     //
     // @return a FlowAgainstHumanity.CardDeckMetadataAdmin interface
     //
-    access(self) fun getCardDeckMetadataAdmin(_ metadataId: String): &FlowAgainstHumanity.CardDeckMetadata{FlowAgainstHumanity.CardDeckMetadataAdmin}? {
+    access(contract) fun getCardDeckMetadataAdmin(_ metadataId: String): &FlowAgainstHumanity.CardDeckMetadata{FlowAgainstHumanity.CardDeckMetadataAdmin}? {
         return FlowAgainstHumanity.getCardDeckMetadataAdmin(metadataId)
     }
 
-    access(self) fun createCardDeckMetadata(_name: String, _description: String, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile, _extra: {String: AnyStruct}): String {
+    access(contract) fun createCardDeckMetadata(_name: String, _description: String, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile, _extra: {String: AnyStruct}): String {
         return FlowAgainstHumanity.createCardDeckMetadata(_name: _name, _description: _description, _image: _image, _thumbnail: _thumbnail, _extra: _extra)
+    }
+
+    access(contract) fun mapAuthorToCardDeck(author: Address, metadataId: String) {
+        FlowAgainstHumanity.mapAuthorToCardDeck(author: author, metadataId: metadataId)
     }
 
     // TODO: Implement getViews()

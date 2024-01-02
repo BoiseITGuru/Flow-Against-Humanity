@@ -9,11 +9,11 @@
     Protocol Design:
 
         Cards - Cards are defined by a CardMetadata struct and stored centrally in the protocol 
-        contract to all for easy moderation. A separate FAHCards contract is used to define the
+        contract to allow for easy moderation. A separate FAHCards contract is used to define the
         actual NFTs minted for each card.
 
         Card Decks - Card Decks are defined by a CardDeckMetadata struct and stored centrally in
-        the protocol contract to all for easy moderation. A separate FAHCardDecks contract is 
+        the protocol contract to allow for easy moderation. A separate FAHCardDecks contract is 
         used to define the actual NFTs minted for each deck allowing royalty and authorship
         rights to the deck to be resold.
 
@@ -47,8 +47,8 @@
 
         
 */
-import MetadataViews from "./utility/MetadataViews.cdc"
-import ViewResolver from "./utility/ViewResolver.cdc"
+import "MetadataViews"
+import "ViewResolver"
 
 pub contract FlowAgainstHumanity: ViewResolver {
     /* 
@@ -94,7 +94,7 @@ pub contract FlowAgainstHumanity: ViewResolver {
 
     // Metadata struct for defining FlowAgainstHumanity
     pub struct CardMetadata: CardMetadataPublic, CardMetadataAdmin {
-        access(self) let metadataId: String
+        access(contract) let metadataId: String
         access(self) let cardDeckId: String
         access(self) let cardDeckAuthor: Address
 		access(self) let text: String
@@ -235,7 +235,7 @@ pub contract FlowAgainstHumanity: ViewResolver {
 
     // Metadata struct for defining CardDecks
     pub struct CardDeckMetadata: CardDeckMetadataPublic, CardDeckMetadataAdmin {
-        access(self) let metadataId: String
+        access(contract) let metadataId: String
 		access(self) let name: String
         access(self) let description: String
         access(self) let questionCards: [String]
@@ -364,9 +364,19 @@ pub contract FlowAgainstHumanity: ViewResolver {
 
     access(account) fun createCardDeckMetadata(_name: String, _description: String, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile, _extra: {String: AnyStruct}): String {
         let metadata = CardDeckMetadata(_name: _name, _description: _description, _image: _image, _thumbnail: _thumbnail, _extra: _extra)
-        FlowAgainstHumanity.cardDeckMetadatas[metadata.metadataId] = metadata
+        FlowAgainstHumanity.cardDeckMetadatas[metadata.getMetadataId()] = metadata
 
         return metadata.metadataId
+    }
+
+    access(account) fun mapAuthorToCardDeck(author: Address, metadataId: String) {
+        self.cardDecks[metadataId] = author
+        
+        if let cardDecks = &self.cardDeckOwners[author] as &[String]? {
+            cardDecks.append(metadataId)
+        } else {
+            self.cardDeckOwners[author] = [metadataId]
+        }
     }
 
 
@@ -385,12 +395,55 @@ pub contract FlowAgainstHumanity: ViewResolver {
     pub var authorCardRoyalties: UFix64
     pub var authorCardDeckRoyalties: UFix64
 
-    access(contract) fun updateGlobalCard(_ _royalties:[MetadataViews.Royalty]) {
+    access(account) fun updateGlobalCard(_ _royalties:[MetadataViews.Royalty]) {
         self.globalCardRoyalties = _royalties
     }
 
-    access(contract) fun updateGlobalGlobalCardDeck(_ _royalties:[MetadataViews.Royalty]) {
+    access(account) fun updateGlobalGlobalCardDeck(_ _royalties:[MetadataViews.Royalty]) {
         self.globalCardDeckRoyalties = _royalties
+    }
+
+
+
+
+
+    /*
+        ################################
+        ||                            ||
+        ||        FAH - Admin         ||
+        ||                            ||
+        ################################ 
+    */
+    pub var adminAddress: Address
+
+    access(account) fun updateAdminAddress(_ _addr: Address) {
+        self.adminAddress = _addr
+    }
+
+
+
+
+    /*
+        ################################
+        ||                            ||
+        ||   FAH - Voting/MultiSig    ||
+        ||                            ||
+        ################################
+    */
+    pub var votingPeriod: UInt64
+    pub var votingThreshold: UInt64
+    pub var votingQuroum: UInt64
+    
+    access(account) fun updateVotingPeriod(_ _duration: UInt64) {
+        self.votingPeriod = _duration
+    }
+
+    access(account) fun updateVotingThreshold(_ _threshold: UInt64) {
+        self.votingThreshold = _threshold
+    }
+
+    access(account) fun updateVotingQuroum(_ _quroum: UInt64) {
+        self.votingQuroum = _quroum
     }
 
 
@@ -451,5 +504,13 @@ pub contract FlowAgainstHumanity: ViewResolver {
         self.globalCardDeckRoyalties = []
         self.authorCardRoyalties = 2.5
         self.authorCardDeckRoyalties = 2.5
+
+        // FAH - Admin
+        self.adminAddress = self.account.address
+
+        // FAH - Voting/MultiSig
+        self.votingPeriod = 1209600 // Two Weeks
+        self.votingThreshold = 50 // 50% of Total Votes
+        self.votingQuroum = 50 // 25% of Tokens In Circulation
     }
 }

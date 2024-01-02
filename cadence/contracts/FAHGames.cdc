@@ -3,10 +3,10 @@
 *  
 *
 */
-import NonFungibleToken from "./utility/NonFungibleToken.cdc"
-import MetadataViews from "./utility/MetadataViews.cdc"
-import ViewResolver from "./utility/ViewResolver.cdc"
-import FlowAgainstHumanity from "./FlowAgainstHumanity.cdc"
+import "NonFungibleToken"
+import "MetadataViews"
+import "ViewResolver"
+import "FlowAgainstHumanity"
 
 pub contract FAHGames: NonFungibleToken, ViewResolver {
     // Total supply of FAHGames in existence

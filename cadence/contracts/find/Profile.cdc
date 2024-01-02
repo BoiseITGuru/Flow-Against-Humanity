@@ -2,9 +2,9 @@
 * Inspiration: https://flow-view-source.com/testnet/account/0xba1132bc08f82fe2/contract/Ghost
 */
 
-import FungibleToken from "../utility/FungibleToken.cdc"
-import ProfileCache from "./ProfileCache.cdc"
-import FindUtils from "./FindUtils.cdc"
+import "FungibleToken"
+import "ProfileCache"
+import "FindUtils"
 
 pub contract Profile {
 	pub let publicPath: PublicPath

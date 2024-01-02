@@ -1,4 +1,21 @@
 {
+	"contracts": {
+		"Clock": "cadence/contracts/find/Clock.cdc",
+		"FAHAdmin": "cadence/contracts/FAHAdmin.cdc",
+		"FAHBackend": "cadence/contracts/FAHBackend.cdc",
+		"FAHCardDecks": "cadence/contracts/FAHCardDecks.cdc",
+		"FAHCards": "cadence/contracts/FAHCards.cdc",
+		"FAHGames": "cadence/contracts/FAHGames.cdc",
+		"FCLCrypto": "cadence/contracts/emulator-account/FCLCrypto.cdc",
+		"FindUtils": "cadence/contracts/find/FindUtils.cdc",
+		"FlowAgainstHumanity": "cadence/contracts/FlowAgainstHumanity.cdc",
+		"FungibleToken": "cadence/contracts/emulator-account/FungibleToken.cdc",
+		"MetadataViews": "cadence/contracts/emulator-account/MetadataViews.cdc",
+		"NonFungibleToken": "cadence/contracts/emulator-account/NonFungibleToken.cdc",
+		"Profile": "cadence/contracts/find/Profile.cdc",
+		"ProfileCache": "cadence/contracts/find/ProfileCache.cdc",
+		"ViewResolver": "cadence/contracts/emulator-account/ViewResolver.cdc"
+	},
 	"networks": {
 		"emulator": "127.0.0.1:3569",
 		"mainnet": "access.mainnet.nodes.onflow.org:9000",
@@ -6,9 +23,42 @@
 		"testnet": "access.devnet.nodes.onflow.org:9000"
 	},
 	"accounts": {
+		"default": {
+			"address": "01cf0e2f2f715450",
+			"key": "0a0baf29ed7804bf1447591bae6da65e4253eec2576eb8df1283304791d1e756"
+		},
 		"emulator-account": {
 			"address": "f8d6e0586b0a20c7",
 			"key": "0a0baf29ed7804bf1447591bae6da65e4253eec2576eb8df1283304791d1e756"
+		},
+		"find": {
+			"address": "e03daebed8ca0615",
+			"key": "0a0baf29ed7804bf1447591bae6da65e4253eec2576eb8df1283304791d1e756"
+		}
+	},
+	"deployments": {
+		"emulator": {
+			"default": [
+				"FAHAdmin",
+				"FAHBackend",
+				"FAHCardDecks",
+				"FAHCards",
+				"FAHGames",
+				"FlowAgainstHumanity"
+			],
+			"emulator-account": [
+				"FCLCrypto",
+				"FungibleToken",
+				"MetadataViews",
+				"NonFungibleToken",
+				"ViewResolver"
+			],
+			"find": [
+				"Clock",
+				"FindUtils",
+				"Profile",
+				"ProfileCache"
+			]
 		}
 	}
 }
