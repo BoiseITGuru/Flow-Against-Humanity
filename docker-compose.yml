@@ -35,7 +35,7 @@ services:
       timeout: 5s
       retries: 10
   fahDev:
-    image: "forge4flow/forge4flow-core:0.0.3"
+    image: "forge4flow/forge4flow-core:0.0.4-alpha"
     ports:
       - "8200:8200"
     depends_on:
