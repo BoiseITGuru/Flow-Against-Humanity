@@ -4,11 +4,11 @@ import { gradientBgChristmas } from '../../../colors'
 import Button from '../../Button'
 import SectionBanner from '.'
 
-const SectionBannerChristmas = () => {
+const SectionBannerPreLaunch = () => {
   return (
     <SectionBanner className={gradientBgChristmas}>
       <h1 className="text-3xl text-white mb-6">
-        Mint Your FREE - LIMITED EDITION Christmas 2023 <br /> Pre-Launch Deck Now!
+        Mint Your FREE - LIMITED EDITION New Years 2024 <br /> Pre-Launch Deck Now!
       </h1>
       <div>
         <Button icon={mdiPineTreeVariant} label="Mint Now" roundedFull />
@@ -17,4 +17,4 @@ const SectionBannerChristmas = () => {
   )
 }
 
-export default SectionBannerChristmas
+export default SectionBannerPreLaunch

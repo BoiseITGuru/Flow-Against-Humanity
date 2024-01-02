@@ -11,6 +11,7 @@ export type MenuAsideItem = {
   color?: ColorButtonKey
   isLogout?: boolean
   requireSession?: boolean
+  requireFeature?: string
   menu?: MenuAsideItem[]
 }
 

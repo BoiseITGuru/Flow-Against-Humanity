@@ -8,7 +8,7 @@ const Home = () => {
 
   useEffect(() => {
     if (router.route === '/') {
-      router.push('/christmas23')
+      router.push('/dashboard')
     }
   }, [router])
 

@@ -33,9 +33,7 @@ const AuthGuard = (props: AuthGuardProps) => {
           }
 
           setCheckingSession(false)
-        } catch (error) {
-          console.log(error)
-          router.replace('/dashboard')
+        } finally {
         }
       }
 

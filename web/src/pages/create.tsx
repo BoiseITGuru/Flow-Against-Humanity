@@ -13,7 +13,7 @@ import FormFilePicker from '../components/Form/FilePicker'
 import LayoutAuthenticated from '../layouts/Authenticated'
 import SectionMain from '../components/Section/Main'
 import SectionTitle from '../components/Section/Title'
-import SectionTitleLineWithButton from '../components/Section/TitleLineWithButton'
+import SectionTitleLineWithGithub from '../components/Section/TitleLineWithGithub'
 import { getPageTitle } from '../config'
 
 const CreateDecksPage = () => {
@@ -24,17 +24,7 @@ const CreateDecksPage = () => {
       </Head>
 
       <SectionMain>
-        <SectionTitleLineWithButton icon={mdiBallotOutline} title="Formik forms example" main>
-          <Button
-            href="https://github.com/justboil/admin-one-react-tailwind"
-            target="_blank"
-            icon={mdiGithub}
-            label="Star on GitHub"
-            color="contrast"
-            roundedFull
-            small
-          />
-        </SectionTitleLineWithButton>
+        <SectionTitleLineWithGithub icon={mdiBallotOutline} title="Create Deck" />
 
         <CardBox>
           <Formik
@@ -147,6 +137,7 @@ const CreateDecksPage = () => {
 }
 
 CreateDecksPage.authGuard = true
+CreateDecksPage.aclObject = { requiredFeature: 'account-setup', redirectUrl: '/setup-account' }
 CreateDecksPage.getLayout = function getLayout(page: ReactElement) {
   return <LayoutAuthenticated>{page}</LayoutAuthenticated>
 }
