@@ -10,8 +10,8 @@ import "ViewResolver"
 import "FlowAgainstHumanity"
 import "Profile"
 
-pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
-    // Total supply of FAHCardDecks in existence
+pub contract FAHCardDeck: NonFungibleToken, ViewResolver {
+    // Total supply of FAHCardDeck in existence
     pub var totalSupply: UInt64
 
     // The event that is emitted when the contract is created
@@ -38,7 +38,7 @@ pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
 		}
 
         pub fun createCardMetadata(_text: String, _type: FlowAgainstHumanity.CardType, _image: MetadataViews.IPFSFile, _thumbnail: MetadataViews.IPFSFile, _maxSupply: UInt64) {
-            let metadataAdmin = FAHCardDecks.getCardDeckMetadataAdmin(self.metadataId) ?? panic("Card Deck Admin Not Found")
+            let metadataAdmin = FAHCardDeck.getCardDeckMetadataAdmin(self.metadataId) ?? panic("Card Deck Admin Not Found")
             metadataAdmin.createCardMetadata(_cardAuthor: self.owner!.address, _text: _text, _type: _type, _image: _image, _thumbnail: _thumbnail, _maxSupply: _maxSupply, _extra: {})
         }
 
@@ -78,14 +78,14 @@ pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
                     return MetadataViews.ExternalURL("https://fah.boiseitguru.dev/sets/".concat(self.metadataId))
                 case Type<MetadataViews.NFTCollectionData>():
                     return MetadataViews.NFTCollectionData(
-						storagePath: FAHCardDecks.CollectionStoragePath,
-						publicPath: FAHCardDecks.CollectionPublicPath,
-						providerPath: FAHCardDecks.CollectionPrivatePath,
+						storagePath: FAHCardDeck.CollectionStoragePath,
+						publicPath: FAHCardDeck.CollectionPublicPath,
+						providerPath: FAHCardDeck.CollectionPrivatePath,
 						publicCollection: Type<&Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(),
 						publicLinkedType: Type<&Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(),
 						providerLinkedType: Type<&Collection{NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection, NonFungibleToken.Provider}>(),
 						createEmptyCollectionFunction: (fun (): @NonFungibleToken.Collection {
-								return <- FAHCardDecks.createEmptyCollection()
+								return <- FAHCardDeck.createEmptyCollection()
 						})
 					)
                 case Type<MetadataViews.Royalties>():
@@ -138,7 +138,7 @@ pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
         pub fun getIDs(): [UInt64]
         pub fun getMetadataIds(): [String]
         pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT
-        pub fun borrowCardDeck(metadataId: String): &FAHCardDecks.NFT? {
+        pub fun borrowCardDeck(metadataId: String): &FAHCardDeck.NFT? {
             post {
                 (result == nil) || (result?.metadataId == metadataId):
                     "Cannot borrow FlowAgainstHumanity reference: the ID of the returned reference is incorrect"
@@ -163,7 +163,7 @@ pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
 
         // TODO: Implement getIDs()
         pub fun getIDs(): [UInt64] {
-            panic("TODO")
+            return self.ownedNFTs.keys
         }
 
         // TODO: Implement borrowNFT()
@@ -177,7 +177,7 @@ pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
         }
 
         // TODO: Implement borrowCardDeck()
-        pub fun borrowCardDeck(metadataId: String): &FAHCardDecks.NFT? {
+        pub fun borrowCardDeck(metadataId: String): &FAHCardDeck.NFT? {
             panic("TODO")
         }
 
@@ -193,7 +193,7 @@ pub contract FAHCardDecks: NonFungibleToken, ViewResolver {
             self.authoredSets[metadataId] = cardDeck.uuid
             self.ownedNFTs[cardDeck.uuid] <-! cardDeck
 
-            FAHCardDecks.mapAuthorToCardDeck(author: self.owner!.address, metadataId: metadataId)
+            FAHCardDeck.mapAuthorToCardDeck(author: self.owner!.address, metadataId: metadataId)
         }
 
         init () {

@@ -10,8 +10,8 @@ import "ViewResolver"
 import "FlowAgainstHumanity"
 import "Profile"
 
-pub contract FAHCards: NonFungibleToken, ViewResolver {
-	// Total supply of FAHCards in existence
+pub contract FAHCard: NonFungibleToken, ViewResolver {
+	// Total supply of FAHCard in existence
     pub var totalSupply: UInt64
 
     // The event that is emitted when the contract is created
@@ -41,11 +41,11 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
         pub let metadataId: String
 
         pub fun getMetadata(): &FlowAgainstHumanity.CardMetadata{FlowAgainstHumanity.CardMetadataPublic}? {
-			return FAHCards.getCardMetadata(self.metadataId)
+			return FAHCard.getCardMetadata(self.metadataId)
 		}
 
         init(_ cardMetadataId: String) {
-            let metadata = FAHCards.getCardMetadata(cardMetadataId) ?? panic("NFT metadata not found")
+            let metadata = FAHCard.getCardMetadata(cardMetadataId) ?? panic("NFT metadata not found")
 
             self.id = metadata.getInCirculation()
             self.text = metadata.getText()
@@ -137,14 +137,14 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
                     return MetadataViews.ExternalURL("https://example-nft.onflow.org/".concat(self.id.toString()))
                 case Type<MetadataViews.NFTCollectionData>():
                     return MetadataViews.NFTCollectionData(
-                        storagePath: FAHCards.CollectionStoragePath,
-                        publicPath: FAHCards.CollectionPublicPath,
-                        providerPath: /private/FAHCardsCollection,
-                        publicCollection: Type<&FAHCards.Collection{FAHCards.FAHCardsCollectionPublic}>(),
-                        publicLinkedType: Type<&FAHCards.Collection{FAHCards.FAHCardsCollectionPublic,NonFungibleToken.CollectionPublic,NonFungibleToken.Receiver,MetadataViews.ResolverCollection}>(),
-                        providerLinkedType: Type<&FAHCards.Collection{FAHCards.FAHCardsCollectionPublic,NonFungibleToken.CollectionPublic,NonFungibleToken.Provider,MetadataViews.ResolverCollection}>(),
+                        storagePath: FAHCard.CollectionStoragePath,
+                        publicPath: FAHCard.CollectionPublicPath,
+                        providerPath: /private/FAHCardCollection,
+                        publicCollection: Type<&FAHCard.Collection{FAHCard.FAHCardCollectionPublic}>(),
+                        publicLinkedType: Type<&FAHCard.Collection{FAHCard.FAHCardCollectionPublic,NonFungibleToken.CollectionPublic,NonFungibleToken.Receiver,MetadataViews.ResolverCollection}>(),
+                        providerLinkedType: Type<&FAHCard.Collection{FAHCard.FAHCardCollectionPublic,NonFungibleToken.CollectionPublic,NonFungibleToken.Provider,MetadataViews.ResolverCollection}>(),
                         createEmptyCollectionFunction: (fun (): @NonFungibleToken.Collection {
-                            return <-FAHCards.createEmptyCollection()
+                            return <-FAHCard.createEmptyCollection()
                         })
                     )
                 case Type<MetadataViews.NFTCollectionDisplay>():
@@ -187,14 +187,14 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
 
     // Defines the methods that are particular to this NFT contract collection
     //
-    pub resource interface FAHCardsCollectionPublic {
+    pub resource interface FAHCardCollectionPublic {
         pub fun deposit(token: @NonFungibleToken.NFT)
         pub fun getIDs(): [UInt64]
         pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT
-        pub fun borrowFAHCards(id: UInt64): &FAHCards.NFT? {
+        pub fun borrowFAHCard(id: UInt64): &FAHCard.NFT? {
             post {
                 (result == nil) || (result?.id == id):
-                    "Cannot borrow FAHCards reference: the ID of the returned reference is incorrect"
+                    "Cannot borrow FAHCard reference: the ID of the returned reference is incorrect"
             }
         }
     }
@@ -203,14 +203,10 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
     // In order to be able to manage NFTs any account will need to create
     // an empty collection first
     //
-    pub resource Collection: FAHCardsCollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection {
+    pub resource Collection: FAHCardCollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection {
         // dictionary of NFT conforming tokens
         // NFT is a resource type with an `UInt64` ID field
         pub var ownedNFTs: @{UInt64: NonFungibleToken.NFT}
-
-        init () {
-            self.ownedNFTs <- {}
-        }
 
         // Removes an NFT from the collection and moves it to the caller
         //
@@ -230,7 +226,7 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
         // @param token: The NFT resource to be included in the collection
         //
         pub fun deposit(token: @NonFungibleToken.NFT) {
-            let token <- token as! @FAHCards.NFT
+            let token <- token as! @FAHCard.NFT
 
             let id: UInt64 = token.id
 
@@ -266,11 +262,11 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
         // @param id: The ID of the wanted NFT
         // @return A reference to the wanted NFT resource
         //
-        pub fun borrowFAHCards(id: UInt64): &FAHCards.NFT? {
+        pub fun borrowFAHCard(id: UInt64): &FAHCard.NFT? {
             if self.ownedNFTs[id] != nil {
                 // Create an authorized reference to allow downcasting
                 let ref = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
-                return ref as! &FAHCards.NFT
+                return ref as! &FAHCard.NFT
             }
 
             return nil
@@ -285,8 +281,12 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
         //
         pub fun borrowViewResolver(id: UInt64): &AnyResource{MetadataViews.Resolver} {
             let nft = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
-            let FAHCards = nft as! &FAHCards.NFT
-            return FAHCards
+            let FAHCard = nft as! &FAHCard.NFT
+            return FAHCard
+        }
+
+        init () {
+            self.ownedNFTs <- {}
         }
 
         destroy() {
@@ -320,14 +320,14 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
         switch view {
             case Type<MetadataViews.NFTCollectionData>():
                 return MetadataViews.NFTCollectionData(
-                    storagePath: FAHCards.CollectionStoragePath,
-                    publicPath: FAHCards.CollectionPublicPath,
-                    providerPath: /private/FAHCardsCollection,
-                    publicCollection: Type<&FAHCards.Collection{FAHCards.FAHCardsCollectionPublic}>(),
-                    publicLinkedType: Type<&FAHCards.Collection{FAHCards.FAHCardsCollectionPublic,NonFungibleToken.CollectionPublic,NonFungibleToken.Receiver,MetadataViews.ResolverCollection}>(),
-                    providerLinkedType: Type<&FAHCards.Collection{FAHCards.FAHCardsCollectionPublic,NonFungibleToken.CollectionPublic,NonFungibleToken.Provider,MetadataViews.ResolverCollection}>(),
+                    storagePath: FAHCard.CollectionStoragePath,
+                    publicPath: FAHCard.CollectionPublicPath,
+                    providerPath: /private/FAHCardCollection,
+                    publicCollection: Type<&FAHCard.Collection{FAHCard.FAHCardCollectionPublic}>(),
+                    publicLinkedType: Type<&FAHCard.Collection{FAHCard.FAHCardCollectionPublic,NonFungibleToken.CollectionPublic,NonFungibleToken.Receiver,MetadataViews.ResolverCollection}>(),
+                    providerLinkedType: Type<&FAHCard.Collection{FAHCard.FAHCardCollectionPublic,NonFungibleToken.CollectionPublic,NonFungibleToken.Provider,MetadataViews.ResolverCollection}>(),
                     createEmptyCollectionFunction: (fun (): @NonFungibleToken.Collection {
-                        return <-FAHCards.createEmptyCollection()
+                        return <-FAHCard.createEmptyCollection()
                     })
                 )
             case Type<MetadataViews.NFTCollectionDisplay>():
@@ -368,11 +368,11 @@ pub contract FAHCards: NonFungibleToken, ViewResolver {
         self.totalSupply = 0
 
         // Set the named paths
-        self.CollectionStoragePath = /storage/FAHCardsCollection
-        self.CollectionPublicPath = /public/FAHCardsCollection
+        self.CollectionStoragePath = /storage/FAHCardCollection
+        self.CollectionPublicPath = /public/FAHCardCollection
 
         // create a public capability for the collection
-        self.account.link<&FAHCards.Collection{NonFungibleToken.CollectionPublic, FAHCards.FAHCardsCollectionPublic, MetadataViews.ResolverCollection}>(
+        self.account.link<&FAHCard.Collection{NonFungibleToken.CollectionPublic, FAHCard.FAHCardCollectionPublic, MetadataViews.ResolverCollection}>(
             self.CollectionPublicPath,
             target: self.CollectionStoragePath
         )
